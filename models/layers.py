@@ -52,10 +52,11 @@ class ROIPooling1(nn.Module):
         - Output: :math:`(N, C)`
 
     """
-    def __init__(self, pool_size, scale):
+    def __init__(self, pool_size, scale, cuda):
         super(ROIPooling1, self).__init__()
         self.pool_size = pool_size
         self.scale = scale
+        self.cuda = cuda
 
     def forward(self, features, rois):
         # features  B*C*H*W
@@ -63,6 +64,8 @@ class ROIPooling1(nn.Module):
         batch_size, num_ch, height, width = features.size()
         num_rois = rois.size()[1]
         output = Variable(torch.FloatTensor(batch_size, num_rois, num_ch, self.pool_size, self.pool_size))
+        if self.cuda:
+            output = output.cuda()
         for b in xrange(batch_size):
             for roindex in xrange(num_rois):
                 px, py, qx, qy = np.round(rois[b, roindex].data.cpu().numpy() * self.scale).astype(int)
@@ -102,10 +105,11 @@ class ROIPooling(nn.Module):
         - Output: :math:`(N, C)`
 
     """
-    def __init__(self, pool_size, scale):
+    def __init__(self, pool_size, scale, cuda):
         super(ROIPooling, self).__init__()
         self.pool_size = pool_size
         self.scale = scale
+        self.cuda = cuda
 
     def forward(self, features, rois):
         # features: N*C*H*W
@@ -114,6 +118,8 @@ class ROIPooling(nn.Module):
         batch_size, num_ch, height, width = features.size()
         num_rois = rois.size()[0]
         output = Variable(torch.FloatTensor(num_rois, num_ch, self.pool_size, self.pool_size))
+        if self.cuda:
+            output = output.cuda()
         output_batch_id = np.zeros(num_rois, dtype=np.int32)
         for roiidx, roi in enumerate(rois):
             batch_id = int(roi[0].data[0])
@@ -154,15 +160,18 @@ class PatchPooling(nn.Module):
         - Output: :math:`(N, C)`
 
     """
-    def __init__(self, batch_size):
+    def __init__(self, batch_size, cuda):
         super(PatchPooling, self).__init__()
         self.batch_size = batch_size
+        self.cuda = cuda
 
     def forward(self, patches, patch_ids):
         # patches: torch.FloatTensor, NxC
         # patch_ids: numpy array, Nx1
         num_patch, num_features = patches.size()
         output = Variable(torch.FloatTensor(self.batch_size, num_features))
+        if self.cuda:
+            output = output.cuda()
         for i in xrange(self.batch_size):
             output[i] = torch.max(patches[np.where(patch_ids == 0), :].squeeze(0), dim=0)[0]
         return output
@@ -178,11 +187,11 @@ def __test__roi():
     print("Features: {}".format(features.size()))
     print("ROIS: {}".format(rois.size()))
 
-    output, batch_id = roi_pooling(features, rois)
+    output, batch_id = roi_pooling(features, rois, cuda=False)
     print(batch_id)
     print(output.size())
     output = output.view(-1, 147)
-    patch_pool = PatchPooling(batch_size=2)
+    patch_pool = PatchPooling(batch_size=2, cuda=False)
     output = patch_pool(output, batch_id)
     print(output.size())
 
