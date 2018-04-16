@@ -108,7 +108,7 @@ ENV/
 *.pth
 *.log
 
-
+output
 # Platforms
 .vscode
 .idea

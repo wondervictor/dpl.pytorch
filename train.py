@@ -56,8 +56,8 @@ if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 
-train_dataset = dataset.PASCAL(data_path=opt.data_path, train=True)
-test_dataset = dataset.PASCAL(data_path=opt.data_path, train=False)
+train_dataset = dataset.PASCAL(data_path=opt.data_dir, train=True)
+test_dataset = dataset.PASCAL(data_path=opt.data_dir, train=False)
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -111,7 +111,7 @@ param_dir = expr_dir+'param/'
 if not os.path.exists(param_dir):
     os.mkdir(param_dir)
 
-optimizer = optim.Adam(dpl.parameters(), lr=opt.lr)
+optimizer = optim.Adam([{"params": dpl.fcs.parameters()},{"params": dpl.out.parameters()}], lr=opt.lr)
 
 averager = utils.Averager()
 

@@ -15,7 +15,7 @@ import torchvision.transforms as transforms
 import prepare_dense_box
 
 transform = transforms.Compose([
-    transforms.Resize(224),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
 ])
 
@@ -43,6 +43,7 @@ class PASCAL(datasets.Dataset):
         label = self.labels[img_name]
         label = torch.FloatTensor(self._convert_label(label))
         box = self.boxes[img_name]
+	print(img.size())
         return img, label, box
 
     def _convert_label(self, lbl):
@@ -77,7 +78,7 @@ class PASCAL(datasets.Dataset):
 
     def _create_patches(self):
         phase = 'train' if self.train else 'val'
-        boxes = prepare_dense_box.prepare_dense_box(self.data_path, self.image_list, "pascal_{}_box.pkl".format(phase))
+        boxes = prepare_dense_box.prepare_dense_box(self.data_path+'JPEGImages/', self.image_list, "pascal_{}_box.pkl".format(phase))
         self.boxes = boxes
 
     def __len__(self):
