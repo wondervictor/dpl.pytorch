@@ -69,17 +69,18 @@ class ROIPooling1(nn.Module):
         for b in xrange(batch_size):
             for roindex in xrange(num_rois):
                 px, py, qx, qy = np.round(rois[b, roindex].data.cpu().numpy() * self.scale).astype(int)
-                roi_width = max(qx - px + 1, 1)
-                roi_height = max(qy - py + 1, 1)
+                feature_part = features[b, :, py:qy+1, px: qx+1]
+		roi_width = feature_part.size()[2]
+                roi_height = feature_part.size()[1]
                 # pool kernel size
-                psize_w = int(np.ceil(float(roi_width) / self.pool_size))
-                psize_h = int(np.ceil(float(roi_height) / self.pool_size))
+                psize_w = max(1,int(np.ceil(float(roi_width) / self.pool_size)))
+                psize_h = max(1,int(np.ceil(float(roi_height) / self.pool_size)))
                 pad_top = (psize_h * self.pool_size - roi_height)/2
                 pad_left = (psize_w * self.pool_size - roi_width)/2
                 pad_bottom = psize_h * self.pool_size - roi_height - pad_top
                 pad_right = psize_w * self.pool_size - roi_width - pad_left
                 maxpool = nn.MaxPool2d((psize_h, psize_w), stride=(psize_h, psize_w))
-                feature_part = features[b, :, py:qy+1, px: qx+1]
+                # feature_part = features[b, :, py:qy+1, px: qx+1]
                 pad = nn.ZeroPad2d(padding=(pad_left, pad_right, pad_top, pad_bottom))
                 feature_part = pad(feature_part.unsqueeze(0)).squeeze(0)
                 output[b, roindex] = maxpool(feature_part)
@@ -124,19 +125,22 @@ class ROIPooling(nn.Module):
         for roiidx, roi in enumerate(rois):
             batch_id = int(roi[0].data[0])
             px, py, qx, qy = np.round(roi.data[1:].cpu().numpy() * self.scale).astype(int)
-            roi_width = max(qx - px + 1, 1)
-            roi_height = max(qy - py + 1, 1)
+            # roi_width = max(qx - px + 1, 1)
+            # roi_height = max(qy - py + 1, 1)
+            feature_part = features[batch_id, :, py:qy+1, px: qx+1]
+            roi_width = feature_part.size()[2]
+            roi_height = feature_part.size()[1]
             # pool kernel size
-            psize_w = int(np.ceil(float(roi_width) / self.pool_size))
-            psize_h = int(np.ceil(float(roi_height) / self.pool_size))
+            psize_w = max(1,int(np.ceil(float(roi_width) / self.pool_size)))
+            psize_h = max(1,int(np.ceil(float(roi_height) / self.pool_size)))            
             pad_top = (psize_h * self.pool_size - roi_height) / 2
             pad_left = (psize_w * self.pool_size - roi_width) / 2
             pad_bottom = psize_h * self.pool_size - roi_height - pad_top
             pad_right = psize_w * self.pool_size - roi_width - pad_left
             maxpool = nn.MaxPool2d((psize_h, psize_w), stride=(psize_h, psize_w))
-            feature_part = features[batch_id, :, py:qy + 1, px: qx + 1]
+            # feature_part = features[batch_id, :, py:qy + 1, px: qx + 1]
             pad = nn.ZeroPad2d(padding=(pad_left, pad_right, pad_top, pad_bottom))
-            feature_part = pad(feature_part.unsqueeze(0)).squeeze(0)
+	    feature_part = pad(feature_part.unsqueeze(0)).squeeze(0)
             output[roiidx] = maxpool(feature_part)
             output_batch_id[roiidx] = batch_id
 
