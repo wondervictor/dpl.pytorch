@@ -21,8 +21,8 @@ class DPL(nn.Module):
             self.cnn = basenet.VGG16()
 
         self.cuda = use_cuda
-        self.roi_pooling = layers.ROIPooling(pool_size=7, scale=0.0625)
-        self.patch_pooling = layers.PatchPooling(batch_size=batch_size)
+        self.roi_pooling = layers.ROIPooling(pool_size=7, scale=0.0625, cuda=self.cuda)
+        self.patch_pooling = layers.PatchPooling(batch_size=batch_size, cuda=self.cuda)
 
         self.fcs = nn.Sequential(
             nn.Linear(512*7*7, 4096),

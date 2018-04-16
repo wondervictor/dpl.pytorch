@@ -10,12 +10,14 @@ import torch
 import random
 import argparse
 import numpy as np
+import torch.utils.data
 import torch.optim as optim
 from torch.autograd import Variable
 
 import utils
 import models.dpl as model
 import models.layers as layers
+import dataset.dataset as dataset
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
@@ -26,6 +28,8 @@ parser.add_argument('--epoch', type=int, default=100, help='training epoches')
 parser.add_argument('--lr', type=float, default=0.001, help='base learning rate')
 parser.add_argument('--data_dir', type=str, required=True, help='parameters storage')
 parser.add_argument('--log_interval', type=int, default=20, help='log messages interval')
+parser.add_argument('--val_interval', type=int, default=5, help='validation interval')
+parser.add_argument('--save_interval', type=int, default=5, help='save model interval')
 parser.add_argument('--name', type=str, required=True, help='expriment name')
 parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
@@ -51,6 +55,22 @@ if not os.path.exists(expr_dir):
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
+
+train_dataset = dataset.PASCAL(data_path=opt.data_path, train=True)
+test_dataset = dataset.PASCAL(data_path=opt.data_path, train=False)
+
+
+train_loader = torch.utils.data.DataLoader(
+    dataset=train_dataset,
+    batch_size=opt.batch_size,
+    shuffle=True
+)
+
+test_loader = torch.utils.data.DataLoader(
+    dataset=test_dataset,
+    batch_size=opt.batch_size,
+    shuffle=True
+)
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -87,25 +107,67 @@ if opt.cuda:
     images = images.cuda()
     labels = labels.cuda()
 
+param_dir = expr_dir+'param/'
+if not os.path.exists(param_dir):
+    os.mkdir(param_dir)
 
 optimizer = optim.Adam(dpl.parameters(), lr=opt.lr)
+
+averager = utils.Averager()
 
 
 def load_data(v, data):
     v.data.resize_(data.size()).copy_(data)
 
 
-def train_batch(net, criterion, optimizer):
+def test(net, criterion):
+    net.eval()
+    test_iter = iter(test_loader)
+    test_averager = utils.Averager()
+    pass
 
-    data = # get a batch data
-    label = # get a batch label
-    rois = # get rois
-    load_data(images, data)
-    load_data(labels, labels)
+def train_batch(net, data, criterion, optimizer):
 
-    output = net(images)
+    img, lbl, box = data
+
+    load_data(images, img)
+    load_data(labels, lbl)
+    boxes = []
+    for n in range(len(box)):
+        boxes += [[n]+b.tolist() for b in box[n]]
+    boxes = Variable(torch.FloatTensor(boxes))
+
+    output = net(images, boxes)
     loss = criterion(output, labels)
-    
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    return loss
+
+logger.log('starting to train')
+iter_steps = 0
+for epoch in xrange(opt.epoch):
+    train_iter = iter(train_loader)
+    i = 0
+    while i < len(train_loader):
+
+        dpl.train()
+        data = train_iter.next()
+        _loss = train_batch(dpl, data, criterion, optimizer=optimizer)
+        averager.add(_loss)
+        iter_steps += 1
+        i += 1
+        if (iter_steps+1) % opt.log_interval == 0:
+            logger.log('[%d/%d][%d/%d] Loss: %f' % (epoch, opt.niter, i, len(train_loader), averager.val()))
+
+    averager.reset()
+    if (epoch+1) % opt.val_interval == 0:
+        pass
+    if (epoch+1) % opt.save_interval == 0:
+        torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
+
 
 
 
