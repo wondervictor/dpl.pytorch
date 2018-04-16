@@ -10,7 +10,7 @@ import numpy as np
 import scipy.io as sio
 import cv2
 
-scales = 32 * np.arange(2, 9)
+scales = 32 * np.avrange(2, 9)
 stepsize = 32
 n_scales = len(scales)
 

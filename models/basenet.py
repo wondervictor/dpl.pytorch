@@ -7,7 +7,7 @@ Author: wondervictor
 
 import torch
 import torchvision
-import torch.nn as nne
+import torch.nn as nn
 
 
 class VGG16(nn.Module):
