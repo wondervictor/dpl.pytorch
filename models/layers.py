@@ -70,7 +70,7 @@ class ROIPooling1(nn.Module):
             for roindex in xrange(num_rois):
                 px, py, qx, qy = np.round(rois[b, roindex].data.cpu().numpy() * self.scale).astype(int)
                 feature_part = features[b, :, py:qy+1, px: qx+1]
-		roi_width = feature_part.size()[2]
+                roi_width = feature_part.size()[2]
                 roi_height = feature_part.size()[1]
                 # pool kernel size
                 psize_w = max(1,int(np.ceil(float(roi_width) / self.pool_size)))
@@ -140,7 +140,7 @@ class ROIPooling(nn.Module):
             maxpool = nn.MaxPool2d((psize_h, psize_w), stride=(psize_h, psize_w))
             # feature_part = features[batch_id, :, py:qy + 1, px: qx + 1]
             pad = nn.ZeroPad2d(padding=(pad_left, pad_right, pad_top, pad_bottom))
-	    feature_part = pad(feature_part.unsqueeze(0)).squeeze(0)
+            feature_part = pad(feature_part.unsqueeze(0)).squeeze(0)
             output[roiidx] = maxpool(feature_part)
             output_batch_id[roiidx] = batch_id
 
@@ -199,7 +199,13 @@ def __test__roi():
     output = patch_pool(output, batch_id)
     print(output.size())
 
-# __test__roi()
+
+class ROIAlign(nn.Module):
+
+    def __init__(self, out_size, spatial_scale):
+        super(ROIAlign, self).__init__()
+        self.align =
+
 
 
 class SPMMaxPooling(nn.Module):
