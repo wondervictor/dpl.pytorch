@@ -126,6 +126,7 @@ def test(net, criterion):
     test_averager = utils.Averager()
     pass
 
+
 def train_batch(net, data, criterion, optimizer):
 
     img, lbl, box = data
