@@ -81,7 +81,7 @@ def weights_init(m):
         m.bias.data.fill_(0)
     elif classname.find('Linear') != -1:
         m.weight.data.normal_(0.0, 0.01)
-        m.bias.data.uniform_(-0.1, 0.1)
+        m.bias.data.uniform_(0, 0.5)
 
 
 dpl = model.DPL(batch_size=opt.batch_size, use_cuda=opt.cuda)
@@ -160,7 +160,7 @@ for epoch in xrange(opt.epoch):
         iter_steps += 1
         i += 1
         if (iter_steps+1) % opt.log_interval == 0:
-            logger.log('[%d/%d][%d/%d] Loss: %f' % (epoch, opt.niter, i, len(train_loader), averager.val()))
+            logger.log('[%d/%d][%d/%d] Loss: %f' % (epoch, opt.epoch, i, len(train_loader), averager.val()))
 
     averager.reset()
     if (epoch+1) % opt.val_interval == 0:

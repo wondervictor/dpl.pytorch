@@ -56,7 +56,7 @@ class DPL(nn.Module):
         # batch_features: B * 1024
 
         output = self.out(batch_features)
-        # output: B * 20
+	# output: B * 20
 
         return output
 

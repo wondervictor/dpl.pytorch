@@ -29,7 +29,8 @@ class MultiSigmoidCrossEntropyLoss(nn.Module):
     def forward(self, s, y):
         # s: batch * class
         # y: batch * class
-        m = y * torch.log(F.sigmoid(s)) + (1-y)*torch.log(1-F.sigmoid(s))
+        m = s*(1-y) + torch.log(1+torch.exp(-s))
+        # m = - y * torch.log(F.sigmoid(s)) + (1-y)*torch.log(1-F.sigmoid(s))
         m = torch.sum(m, dim=1)
         m = torch.mean(m)
         return m

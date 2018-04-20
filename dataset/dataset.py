@@ -43,7 +43,6 @@ class PASCAL(datasets.Dataset):
         label = self.labels[img_name]
         label = torch.FloatTensor(self._convert_label(label))
         box = self.boxes[img_name]
-	print(img.size())
         return img, label, box
 
     def _convert_label(self, lbl):
