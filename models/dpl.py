@@ -46,10 +46,9 @@ class DPL(nn.Module):
 
         roi_output = self.roi_align(features, rois)
         # roi_output N*512*7*7
-
         num_rois = rois.size()[0]
         output_batch_id = np.zeros(num_rois, dtype=np.int32)
-        for roiidx, roi in enumerate(rois):
+	for roiidx, roi in enumerate(rois):
             batch_id = int(roi[0].data[0])
             output_batch_id[roiidx] = batch_id
 
@@ -58,7 +57,6 @@ class DPL(nn.Module):
 
         patch_features = self.fcs(patch_features)
         # patch_features: N * 1024
-
         batch_features = self.patch_pooling(patch_features, output_batch_id)
         # batch_features: B * 1024
 

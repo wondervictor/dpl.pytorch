@@ -136,7 +136,7 @@ def train_batch(net, data, criterion, optimizer):
     boxes = []
     for n in range(len(box)):
         boxes += [[n]+b.tolist() for b in box[n]]
-    boxes = Variable(torch.FloatTensor(boxes))
+    boxes = Variable(torch.FloatTensor(boxes)).cuda()
 
     output = net(images, boxes)
     loss = criterion(output, labels)
