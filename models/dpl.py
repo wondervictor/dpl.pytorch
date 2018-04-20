@@ -7,6 +7,7 @@ Author: wondervictor
 
 import torch
 import torch.nn as nn
+import numpy as np
 import layers
 import basenet
 
@@ -21,7 +22,7 @@ class DPL(nn.Module):
             self.cnn = basenet.VGG16()
 
         self.use_cuda = use_cuda
-        self.roi_pooling = layers.ROIPooling(pool_size=7, scale=0.0625, cuda=self.use_cuda)
+        self.roi_align = layers.ROIAlign(out_size=7, spatial_scale=0.0625)
         self.patch_pooling = layers.PatchPooling(batch_size=batch_size, cuda=self.use_cuda)
 
         self.fcs = nn.Sequential(
@@ -43,8 +44,14 @@ class DPL(nn.Module):
         features = self.cnn(images)
         # features: B*512*H*W
 
-        roi_output, batch_id = self.roi_pooling(features, rois)
+        roi_output = self.roi_align(features, rois)
         # roi_output N*512*7*7
+
+        num_rois = rois.size()[0]
+        output_batch_id = np.zeros(num_rois, dtype=np.int32)
+        for roiidx, roi in enumerate(rois):
+            batch_id = int(roi[0].data[0])
+            output_batch_id[roiidx] = batch_id
 
         patch_features = roi_output.view(-1, 512*7*7)
         # patch_features: N * (512*7*7)
@@ -52,7 +59,7 @@ class DPL(nn.Module):
         patch_features = self.fcs(patch_features)
         # patch_features: N * 1024
 
-        batch_features = self.patch_pooling(patch_features, batch_id)
+        batch_features = self.patch_pooling(patch_features, output_batch_id)
         # batch_features: B * 1024
 
         output = self.out(batch_features)

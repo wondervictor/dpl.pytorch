@@ -10,6 +10,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+from roi_align.modules import roi_align
 
 
 class MultiSigmoidCrossEntropyLoss(nn.Module):
@@ -204,8 +205,10 @@ class ROIAlign(nn.Module):
 
     def __init__(self, out_size, spatial_scale):
         super(ROIAlign, self).__init__()
-        self.align =
+        self.align = roi_align.RoIAlign(out_size, out_size, spatial_scale)
 
+    def forward(self, features, rois):
+        return self.align(features, rois)
 
 
 class SPMMaxPooling(nn.Module):
