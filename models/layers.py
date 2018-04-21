@@ -31,6 +31,7 @@ class MultiSigmoidCrossEntropyLoss(nn.Module):
         # s: batch * class
         # y: batch * class
         m = y * torch.log(F.sigmoid(s)) + (1-y)*torch.log(1-F.sigmoid(s))
+        m = m.clamp(min=1e-8)
         m = torch.sum(m, dim=1)
         m = torch.mean(m)
         return m
@@ -178,7 +179,7 @@ class PatchPooling(nn.Module):
         if self.cuda:
             output = output.cuda()
         for i in xrange(self.batch_size):
-            output[i] = torch.max(patches[np.where(patch_ids == 0), :].squeeze(0), dim=0)[0]
+            output[i] = torch.max(patches[np.where(patch_ids == i), :].squeeze(0), dim=0)[0]
         return output
 
 

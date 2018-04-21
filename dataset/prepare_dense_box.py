@@ -10,7 +10,7 @@ import numpy as np
 import scipy.io as sio
 import cv2
 
-scales = 32 * np.avrange(2, 9)
+scales = 32 * np.arange(2, 9)
 stepsize = 32
 n_scales = len(scales)
 
@@ -23,7 +23,7 @@ def prepare_dense_box(dataset_dir, image_list, save_path):
     boxes = {}
     for name in image_list:
         img = cv2.imread(os.path.join(dataset_dir, "{}.jpg".format(name)))
-	print(os.path.join(dataset_dir, "{}.jpg".format(name)))
+        print(os.path.join(dataset_dir, "{}.jpg".format(name)))
         img = cv2.resize(img, (224, 224))
         h, w = img.shape[:2]
         rect = np.zeros((0, 4), dtype=np.float)
