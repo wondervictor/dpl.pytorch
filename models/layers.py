@@ -167,19 +167,18 @@ class PatchPooling(nn.Module):
         - Output: :math:`(N, C)`
 
     """
-    def __init__(self, batch_size, cuda):
+    def __init__(self, cuda):
         super(PatchPooling, self).__init__()
-        self.batch_size = batch_size
         self.cuda = cuda
 
-    def forward(self, patches, patch_ids):
+    def forward(self, batch_size, patches, patch_ids):
         # patches: torch.FloatTensor, NxC
         # patch_ids: numpy array, Nx1
         num_patch, num_features = patches.size()
-        output = Variable(torch.FloatTensor(self.batch_size, num_features))
+        output = Variable(torch.FloatTensor(batch_size, num_features))
         if self.cuda:
             output = output.cuda()
-        for i in xrange(self.batch_size):
+        for i in xrange(batch_size):
             output[i] = torch.max(patches[np.where(patch_ids == i), :].squeeze(0), dim=0)[0]
         return output
 

@@ -23,7 +23,7 @@ class DPL(nn.Module):
 
         self.use_cuda = use_cuda
         self.roi_align = layers.ROIAlign(out_size=7, spatial_scale=0.0625)
-        self.patch_pooling = layers.PatchPooling(batch_size=batch_size, cuda=self.use_cuda)
+        self.patch_pooling = layers.PatchPooling(cuda=self.use_cuda)
 
         self.fcs = nn.Sequential(
             nn.Linear(512*7*7, 4096),
@@ -43,7 +43,7 @@ class DPL(nn.Module):
 
         features = self.cnn(images)
         # features: B*512*H*W
-
+        batch_size = features.size()[0]
         roi_output = self.roi_align(features, rois)
         # roi_output N*512*7*7
         num_rois = rois.size()[0]
@@ -57,7 +57,7 @@ class DPL(nn.Module):
 
         patch_features = self.fcs(patch_features)
         # patch_features: N * 1024
-        batch_features = self.patch_pooling(patch_features, output_batch_id)
+        batch_features = self.patch_pooling(batch_size, patch_features, output_batch_id)
         # batch_features: B * 1024
 
         output = self.out(batch_features)

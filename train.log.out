@@ -211,21 +211,24 @@ starting to train
 [0/100][2799/2859] Loss: 5.247838
 [0/100][2819/2859] Loss: 5.246548
 [0/100][2839/2859] Loss: 5.247501
-Traceback (most recent call last):
-  File "train.py", line 159, in <module>
-    _loss = train_batch(dpl, data, criterion, optimizer=optimizer)
-  File "train.py", line 141, in train_batch
-    output = net(images, boxes)
-  File "/workspace2/cth/anaconda/anaconda2/lib/python2.7/site-packages/torch/nn/modules/module.py", line 357, in __call__
-    result = self.forward(*input, **kwargs)
-  File "/workspace2/cth/dpl.pytorch/models/dpl.py", line 60, in forward
-    batch_features = self.patch_pooling(patch_features, output_batch_id)
-  File "/workspace2/cth/anaconda/anaconda2/lib/python2.7/site-packages/torch/nn/modules/module.py", line 357, in __call__
-    result = self.forward(*input, **kwargs)
-  File "/workspace2/cth/dpl.pytorch/models/layers.py", line 183, in forward
-    output[i] = torch.max(patches[np.where(patch_ids == i), :].squeeze(0), dim=0)[0]
-  File "/workspace2/cth/anaconda/anaconda2/lib/python2.7/site-packages/torch/autograd/variable.py", line 78, in __getitem__
-    return Index.apply(self, key)
-  File "/workspace2/cth/anaconda/anaconda2/lib/python2.7/site-packages/torch/autograd/_functions/tensor.py", line 87, in forward
-    result = i.index(ctx.index)
-IndexError: When performing advanced indexing the indexing objects must be LongTensors or convertible to LongTensors. The indexing object at position 0 is of type tuple and cannot be converted
+[0/100][2859/2859] Loss: 5.244867
+[1/100][20/2859] Loss: 5.147863
+[1/100][40/2859] Loss: 4.843151
+[1/100][60/2859] Loss: 4.962826
+[1/100][80/2859] Loss: 4.951033
+[1/100][100/2859] Loss: 4.886427
+[1/100][120/2859] Loss: 4.897883
+[1/100][140/2859] Loss: 4.857891
+[1/100][160/2859] Loss: 4.814690
+[1/100][180/2859] Loss: 4.902147
+[1/100][200/2859] Loss: 4.877947
+[1/100][220/2859] Loss: 4.893171
+[1/100][240/2859] Loss: 4.863156
+[1/100][260/2859] Loss: 4.808864
+[1/100][280/2859] Loss: 4.808995
+[1/100][300/2859] Loss: 4.844473
+[1/100][320/2859] Loss: 4.834679
+[1/100][340/2859] Loss: 4.848883
+[1/100][360/2859] Loss: 4.842553
+[1/100][380/2859] Loss: 4.845419
+[1/100][400/2859] Loss: 4.864552
