@@ -72,6 +72,7 @@ test_loader = torch.utils.data.DataLoader(
     shuffle=True
 )
 
+
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -81,7 +82,13 @@ def weights_init(m):
         m.bias.data.fill_(0)
     elif classname.find('Linear') != -1:
         m.weight.data.normal_(0.0, 0.01)
-        m.bias.data.uniform_(-0.1, 0.1)
+        m.bias.data.uniform_(0, 0.5)
+
+
+def adjust_lr(_optimizer, _epoch):
+    lr = opt.lr * 0.9 * (_epoch/5)
+    for param_group in _optimizer.param_groups:
+        param_group['lr'] = lr
 
 
 dpl = model.DPL(batch_size=opt.batch_size, use_cuda=opt.cuda)
@@ -136,7 +143,7 @@ def train_batch(net, data, criterion, optimizer):
     boxes = []
     for n in range(len(box)):
         boxes += [[n]+b.tolist() for b in box[n]]
-    boxes = Variable(torch.FloatTensor(boxes))
+    boxes = Variable(torch.FloatTensor(boxes)).cuda()
 
     output = net(images, boxes)
     loss = criterion(output, labels)
@@ -146,6 +153,7 @@ def train_batch(net, data, criterion, optimizer):
     optimizer.step()
 
     return loss
+
 
 logger.log('starting to train')
 iter_steps = 0
@@ -161,13 +169,16 @@ for epoch in xrange(opt.epoch):
         iter_steps += 1
         i += 1
         if (iter_steps+1) % opt.log_interval == 0:
-            logger.log('[%d/%d][%d/%d] Loss: %f' % (epoch, opt.niter, i, len(train_loader), averager.val()))
+            logger.log('[%d/%d][%d/%d] Loss: %f' % (epoch, opt.epoch, i, len(train_loader), averager.val()))
 
     averager.reset()
     if (epoch+1) % opt.val_interval == 0:
         pass
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
+
+    if (epoch+1) % 5 == 0:
+        adjust_lr(optimizer, epoch)
 
 
 
