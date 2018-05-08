@@ -20,7 +20,7 @@ import models.layers as layers
 import dataset.dataset as dataset
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
+parser.add_argument('--batch_size', type=int, default=8, help='training batch size')
 parser.add_argument('--base model', type=str, default='vgg', help='base cnn model:[vgg, resnet, densenet]')
 parser.add_argument('--cuda', action='store_true', help='use GPU to train')
 parser.add_argument('--dataset', type=str, default='VOC2012', help='training dataset:[VOC2012, VOC2007, COCO]')
@@ -58,6 +58,11 @@ if torch.cuda.is_available() and not opt.cuda:
 
 train_dataset = dataset.PASCAL(data_path=opt.data_dir, train=True)
 test_dataset = dataset.PASCAL(data_path=opt.data_dir, train=False)
+
+def adjust_lr(_optimizer, _epoch):
+    lr = opt.lr * 0.9 * (_epoch/5)
+    for param_group in _optimizer.param_groups:
+        param_group['lr'] = lr
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -169,7 +174,7 @@ for epoch in xrange(opt.epoch):
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
 
-
-
+    if (epoch+1) % 5 == 0:
+        adjust_lr(optimizer, epoch)
 
 
