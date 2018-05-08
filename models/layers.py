@@ -8,7 +8,6 @@ Author: wondervictor
 import torch
 import numpy as np
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
 from roi_align.modules import roi_align
 
@@ -26,15 +25,16 @@ class MultiSigmoidCrossEntropyLoss(nn.Module):
     """
     def __init__(self):
         super(MultiSigmoidCrossEntropyLoss, self).__init__()
+        self.bce = nn.BCEWithLogitsLoss()
 
     def forward(self, s, y):
         # s: batch * class
         # y: batch * class
-        # m = s*(1-y) + torch.log(1+torch.exp(-s))
-        m = y * torch.log(F.sigmoid(s)) + (1-y)*torch.log(1-F.sigmoid(s))
-        m = -torch.sum(m, dim=1)
-        m = torch.mean(m)
-        return m
+        class_num = s.size()[1]
+
+        loss = self.bce(s, y) * class_num
+
+        return loss
 
     def __repr__(self):
         return self.__class__.__name__
