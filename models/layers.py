@@ -182,25 +182,6 @@ class PatchPooling(nn.Module):
         return output
 
 
-def __test__roi():
-
-    roi_pooling = ROIPooling(pool_size=7, scale=0.5)
-    features = Variable(torch.randn((2, 3, 40, 40)))
-    # rois = Variable(torch.FloatTensor([[[2, 14, 17, 39], [4, 26, 29, 39], [1, 2, 39, 39], [1, 4, 23, 34]], [[5, 3, 30, 27], [12, 12, 30, 34], [5, 14, 39, 38], [6, 10, 22, 35]]]))
-    rois = Variable(torch.FloatTensor([[1, 2, 14, 17, 39], [0, 4, 26, 29, 39], [0, 1, 2, 39, 39], [0, 1, 4, 23, 34], [0, 5, 3, 30, 27], [1, 12, 12, 30, 34], [1, 5, 14, 39, 38], [0, 6, 10, 22, 35]]))
-
-    print("Features: {}".format(features.size()))
-    print("ROIS: {}".format(rois.size()))
-
-    output, batch_id = roi_pooling(features, rois, cuda=False)
-    print(batch_id)
-    print(output.size())
-    output = output.view(-1, 147)
-    patch_pool = PatchPooling(batch_size=2, cuda=False)
-    output = patch_pool(output, batch_id)
-    print(output.size())
-
-
 class ROIAlign(nn.Module):
 
     def __init__(self, out_size, spatial_scale):
