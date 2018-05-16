@@ -31,13 +31,19 @@ class PASCALVOC(Dataset):
 
         self._imageset = imageset  # 'trainval', 'val'
         self._data_path = data_dir
-        self._classes = ('__backgroud__', 'aeroplane', 'bicycle', 'bird',
+        self._classes = ('aeroplane', 'bicycle', 'bird',
                          'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
                          'cow', 'diningtable', 'dog', 'horse', 'motorbike',
                          'person', 'pottedplant', 'sheep', 'sofa', 'train',
                          'tvmonitor')
         self.img_ext = '.jpg'
         self.img_size = img_size
+        self.config = {'cleanup': True,
+                       'use_salt': True,
+                       'use_diff': False,
+                       'matlab_eval': False,
+                       'rpn_file': None}
+
         self._class_to_index = dict(list(zip(self._classes, range(len(self._classes)))))
         self._image_index = self._load_imageset_index()
         self.num_classes = len(self._classes)
@@ -50,11 +56,6 @@ class PASCALVOC(Dataset):
         self.resize = transforms.Resize(img_size)
 
         self._load_rois(roi_type=self.roi_type, roi_dir=self.roi_path)
-        self.config = {'cleanup': True,
-                       'use_salt': True,
-                       'use_diff': False,
-                       'matlab_eval': False,
-                       'rpn_file': None}
 
     def __len__(self):
         return len(self._image_index)
@@ -62,7 +63,7 @@ class PASCALVOC(Dataset):
     def _load_imageset_index(self):
         """ Load Image Index from File
         """
-        imageset_file = os.path.join(self._data_path, 'ImageSets', 'Main', self._imageset, '.txt')
+        imageset_file = os.path.join(self._data_path, 'ImageSets', 'Main', self._imageset+'.txt')
         assert os.path.exists(imageset_file), 'Path does not exists: {}'.format(imageset_file)
 
         with open(imageset_file) as f:
@@ -237,7 +238,7 @@ class PASCALVOC(Dataset):
 
     def _create_patches(self, roi_dir):
         boxes = prepare_dense_box.prepare_dense_box(os.path.join(self._data_path, 'JPEGImages'), self._image_index,
-                                                    os.path.join(roi_dir, "pascal_{}_box.pkl".format(self._imageset)))
+                                                    os.path.join(roi_dir, 'dense_box_data', "pascal_{}_box.pkl".format(self._imageset)))
         return boxes
 
     def _load_selective_search(self, roi_dir):
@@ -264,8 +265,8 @@ class PASCALVOC(Dataset):
         img = Image.open(img_path)
 
         roi = self.rois[img_name]
-        label = self._labels[img_name]
-
+        roi = np.array(roi)
+        label = self._labels[img_name]['labels']
         w, h = img.size
         max_size = max(h, w)
         ratio = float(self.img_size) / float(max_size)
@@ -274,12 +275,11 @@ class PASCALVOC(Dataset):
         img = img.resize((w, h))
         img = self.toTensor(img)
         roi = roi * ratio
-        if len(roi) > 2000:
-            roi = random.sample(roi, 2000)
+        if len(roi) > 200:
+            roi = random.sample(roi, 200)
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
         wrap_img[:, 0:w, 0:h] = img
-
         return wrap_img, label, roi
 
 

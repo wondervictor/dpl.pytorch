@@ -61,7 +61,7 @@ train_dataset = pascal_voc.PASCALVOC(
     data_dir=opt.data_dir,
     imageset='train',
     roi_path='./data/',
-    roi_type='selective_search',
+    roi_type='dense_box', #'selective_search',
     devkit='./devkit/'
 )
 
@@ -70,7 +70,7 @@ val_dataset = pascal_voc.PASCALVOC(
     data_dir=opt.data_dir,
     imageset='val',
     roi_path='./data/',
-    roi_type='selective_search',
+    roi_type='dense_box', #selective_search',
     devkit='./devkit/'
 )
 
@@ -158,7 +158,6 @@ def train_batch(net, data, criterion, optimizer):
     for n in range(len(box)):
         boxes += [[n]+b.tolist() for b in box[n]]
     boxes = Variable(torch.FloatTensor(boxes)).cuda()
-
     output = net(images, boxes)
     loss = criterion(output, labels)
 
