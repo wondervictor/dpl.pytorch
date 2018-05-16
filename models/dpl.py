@@ -48,7 +48,7 @@ class DPL(nn.Module):
         # roi_output N*512*7*7
         num_rois = rois.size()[0]
         output_batch_id = np.zeros(num_rois, dtype=np.int32)
-	for roiidx, roi in enumerate(rois):
+        for roiidx, roi in enumerate(rois):
             batch_id = int(roi[0].data[0])
             output_batch_id[roiidx] = batch_id
 
@@ -61,7 +61,7 @@ class DPL(nn.Module):
         # batch_features: B * 1024
 
         output = self.out(batch_features)
-	# output: B * 20
+        # output: B * 20
 
         return output
 

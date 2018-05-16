@@ -8,6 +8,7 @@ Code written by wondervictor, most code borrowed from Ross Girshick et. al
 import os
 import torch
 import pickle
+import random
 import subprocess
 import numpy as np
 import scipy.io as sio
@@ -273,6 +274,8 @@ class PASCALVOC(Dataset):
         img = img.resize((w, h))
         img = self.toTensor(img)
         roi = roi * ratio
+        if len(roi) > 2000:
+            roi = random.sample(roi, 2000)
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
         wrap_img[:, 0:w, 0:h] = img

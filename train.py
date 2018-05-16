@@ -17,7 +17,7 @@ from torch.autograd import Variable
 import utils
 import models.dpl as model
 import models.layers as layers
-import dataset.dataset as dataset
+from datasets import pascal_voc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
@@ -56,18 +56,32 @@ if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 
-train_dataset = dataset.PASCAL(data_path=opt.data_dir, train=True)
-test_dataset = dataset.PASCAL(data_path=opt.data_dir, train=False)
+train_dataset = pascal_voc.PASCALVOC(
+    img_size=opt.img_size,
+    data_dir=opt.data_dir,
+    imageset='train',
+    roi_path='./data/',
+    roi_type='selective_search',
+    devkit='./devkit/'
+)
 
+val_dataset = pascal_voc.PASCALVOC(
+    img_size=opt.img_size,
+    data_dir=opt.data_dir,
+    imageset='val',
+    roi_path='./data/',
+    roi_type='selective_search',
+    devkit='./devkit/'
+)
 
 train_loader = torch.utils.data.DataLoader(
     dataset=train_dataset,
     batch_size=opt.batch_size,
-    shuffle=True
+    shuffle=True,
 )
 
 test_loader = torch.utils.data.DataLoader(
-    dataset=test_dataset,
+    dataset=val_dataset,
     batch_size=opt.batch_size,
     shuffle=True
 )
@@ -118,7 +132,7 @@ param_dir = expr_dir+'param/'
 if not os.path.exists(param_dir):
     os.mkdir(param_dir)
 
-optimizer = optim.Adam([{"params": dpl.fcs.parameters()},{"params": dpl.out.parameters()}], lr=opt.lr)
+optimizer = optim.Adam([{"params": dpl.fcs.parameters()}, {"params": dpl.out.parameters()}], lr=opt.lr)
 
 averager = utils.Averager()
 

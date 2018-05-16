@@ -5,11 +5,13 @@ Description: Layers Definition
 Author: wondervictor
 """
 
+import sys
 import torch
 import numpy as np
 import torch.nn as nn
 from torch.autograd import Variable
-from roi_align.modules import roi_align
+sys.path.append('./lib')
+from model.roi_align.modules import roi_align
 
 
 class MultiSigmoidCrossEntropyLoss(nn.Module):
