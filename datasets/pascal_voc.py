@@ -31,7 +31,7 @@ class PASCALVOC(Dataset):
 
         self._imageset = imageset  # 'trainval', 'val'
         self._data_path = data_dir
-        self._classes = ('__backgroud__', 'aeroplane', 'bicycle', 'bird',
+        self._classes = ('aeroplane', 'bicycle', 'bird',
                          'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
                          'cow', 'diningtable', 'dog', 'horse', 'motorbike',
                          'person', 'pottedplant', 'sheep', 'sofa', 'train',
@@ -266,7 +266,6 @@ class PASCALVOC(Dataset):
 
         roi = self.rois[img_name]
         label = self._labels[img_name]['labels']
-
         w, h = img.size
         max_size = max(h, w)
         ratio = float(self.img_size) / float(max_size)
@@ -280,7 +279,6 @@ class PASCALVOC(Dataset):
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
         wrap_img[:, 0:w, 0:h] = img
-
         return wrap_img, label, roi
 
 
