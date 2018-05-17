@@ -24,7 +24,6 @@ def prepare_dense_box(dataset_dir, image_list, save_path):
     for name in image_list:
         img = cv2.imread(os.path.join(dataset_dir, "{}.jpg".format(name)))
         print(os.path.join(dataset_dir, "{}.jpg".format(name)))
-        img = cv2.resize(img, (224, 224))
         h, w = img.shape[:2]
         rect = np.zeros((0, 4), dtype=np.float)
         for j in range(len(scales)):
@@ -56,4 +55,4 @@ def prepare_dense_box(dataset_dir, image_list, save_path):
         boxes[name] = rect
     with open(save_path, 'wb') as f:
         pickle.dump(boxes, f)
-    return f
+    return boxes

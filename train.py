@@ -18,6 +18,7 @@ import utils
 import models.dpl as model
 import models.layers as layers
 from datasets import pascal_voc
+from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
@@ -78,12 +79,14 @@ train_loader = torch.utils.data.DataLoader(
     dataset=train_dataset,
     batch_size=opt.batch_size,
     shuffle=True,
+    collate_fn=data_utils.collate_fn
 )
 
 test_loader = torch.utils.data.DataLoader(
     dataset=val_dataset,
     batch_size=opt.batch_size,
-    shuffle=True
+    shuffle=True,
+    collate_fn=data_utils.collate_fn
 )
 
 
@@ -154,10 +157,7 @@ def train_batch(net, data, criterion, optimizer):
 
     load_data(images, img)
     load_data(labels, lbl)
-    boxes = []
-    for n in range(len(box)):
-        boxes += [[n]+b.tolist() for b in box[n]]
-    boxes = Variable(torch.FloatTensor(boxes)).cuda()
+    boxes = Variable(torch.FloatTensor(box)).cuda()
 
     output = net(images, boxes)
     loss = criterion(output, labels)
