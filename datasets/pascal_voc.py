@@ -31,11 +31,11 @@ class PASCALVOC(Dataset):
 
         self._imageset = imageset  # 'trainval', 'val'
         self._data_path = data_dir
-        self._classes = ('aeroplane', 'bicycle', 'bird',
-                         'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
-                         'cow', 'diningtable', 'dog', 'horse', 'motorbike',
-                         'person', 'pottedplant', 'sheep', 'sofa', 'train',
-                         'tvmonitor')
+        self.classes = ('aeroplane', 'bicycle', 'bird',
+                        'boat', 'bottle', 'bus', 'car', 'cat', 'chair',
+                        'cow', 'diningtable', 'dog', 'horse', 'motorbike',
+                        'person', 'pottedplant', 'sheep', 'sofa', 'train',
+                        'tvmonitor')
         self.img_ext = '.jpg'
         self.img_size = img_size
         self.config = {'cleanup': True,
@@ -44,12 +44,12 @@ class PASCALVOC(Dataset):
                        'matlab_eval': False,
                        'rpn_file': None}
 
-        self._class_to_index = dict(list(zip(self._classes, range(len(self._classes)))))
-        self._image_index = self._load_imageset_index()
-        self.num_classes = len(self._classes)
+        self._class_to_index = dict(list(zip(self.classes, range(len(self.classes)))))
+        self.image_index = self._load_imageset_index()
+        self.num_classes = len(self.classes)
         self._devkit_path = devkit if devkit is not None else 'VOCdevkit'
-        self._anotations = dict([(x, self._load_anotation_from_index(x)) for x in self._image_index])
-        self._labels = dict([(x, self._load_class_label_from_index(x)) for x in self._image_index])
+        self._anotations = dict([(x, self._load_anotation_from_index(x)) for x in self.image_index])
+        self._labels = dict([(x, self._load_class_label_from_index(x)) for x in self.image_index])
         self.roi_path = roi_path
         self.roi_type = roi_type
         self.toTensor = transforms.ToTensor()
@@ -58,7 +58,7 @@ class PASCALVOC(Dataset):
         self._load_rois(roi_type=self.roi_type, roi_dir=self.roi_path)
 
     def __len__(self):
-        return len(self._image_index)
+        return len(self.image_index)
 
     def _load_imageset_index(self):
         """ Load Image Index from File
@@ -75,7 +75,7 @@ class PASCALVOC(Dataset):
         return image_path
 
     def image_path_at(self, i):
-        return self.image_path_from_index(self._image_index[i])
+        return self.image_path_from_index(self.image_index[i])
 
     def _load_class_label_from_index(self, index):
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
@@ -149,13 +149,13 @@ class PASCALVOC(Dataset):
         return path
 
     def _write_voc_results_file(self, all_boxes):
-        for cls_ind, cls in enumerate(self._classes):
+        for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
             print('Writing {} VOC results file'.format(cls))
             filename = self._get_voc_results_file_template().format(cls)
             with open(filename, 'wt') as f:
-                for im_ind, index in enumerate(self._image_index):
+                for im_ind, index in enumerate(self.image_index):
                     dets = all_boxes[cls_ind][im_ind]
                     if len(dets) == 0:
                         continue
@@ -166,27 +166,27 @@ class PASCALVOC(Dataset):
                                        dets[k, 0] + 1, dets[k, 1] + 1,
                                        dets[k, 2] + 1, dets[k, 3] + 1))
 
-    def _do_python_eval(self, output_dir='output'):
+    def do_python_eval(self, output_dir='output'):
         annopath = os.path.join(
-            self._devkit_path,
+            self._data_path,
             'VOC2012',
             'Annotations',
             '{:s}.xml')
         imagesetfile = os.path.join(
-            self._devkit_path,
+            self._data_path,
             'VOC2012',
             'ImageSets',
             'Main',
             self._imageset + '.txt')
-        cachedir = os.path.join(self._devkit_path, 'annotations_cache')
+        cachedir = os.path.join(self._data_path, 'annotations_cache')
         aps = []
 
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
-        for i, cls in enumerate(self._classes):
+        for i, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
-            filename = self._get_voc_results_file_template().format(cls)
+            filename = os.path.join(output_dir, 'cls_test_{}.txt'.format(cls))
             rec, prec, ap = voc_eval(
                 filename, annopath, imagesetfile, cls, cachedir, ovthresh=0.5,
                 use_07_metric=False)
@@ -226,18 +226,18 @@ class PASCALVOC(Dataset):
 
     def evaluate_detections(self, all_boxes, output_dir):
         self._write_voc_results_file(all_boxes)
-        self._do_python_eval(output_dir)
+        self.do_python_eval(output_dir)
         if self.config['matlab_eval']:
             self._do_matlab_eval(output_dir)
         if self.config['cleanup']:
-            for cls in self._classes:
+            for cls in self.classes:
                 if cls == '__background__':
                     continue
                 filename = self._get_voc_results_file_template().format(cls)
                 os.remove(filename)
 
     def _create_patches(self, roi_dir):
-        boxes = prepare_dense_box.prepare_dense_box(os.path.join(self._data_path, 'JPEGImages'), self._image_index,
+        boxes = prepare_dense_box.prepare_dense_box(os.path.join(self._data_path, 'JPEGImages'), self.image_index,
                                                     os.path.join(roi_dir, 'dense_box_data', "pascal_{}_box.pkl".format(self._imageset)))
         return boxes
 
@@ -248,7 +248,7 @@ class PASCALVOC(Dataset):
         raw_data = sio.loadmat(filename)['boxes'].ravel()
         box_list = {}
         for i in xrange(raw_data.shape[0]):
-            box_list[self._image_index[i]] = raw_data[i][:, (1, 0, 3, 2)] - 1
+            box_list[self.image_index[i]] = raw_data[i][:, (1, 0, 3, 2)] - 1
         return box_list
 
     def _load_rois(self, roi_type, roi_dir):
@@ -260,7 +260,7 @@ class PASCALVOC(Dataset):
 
     def __getitem__(self, idx):
 
-        img_name = self._image_index[idx]
+        img_name = self.image_index[idx]
         img_path = self.image_path_at(idx)
         img = Image.open(img_path)
 
