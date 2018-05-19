@@ -84,8 +84,8 @@ train_loader = torch.utils.data.DataLoader(
 
 test_loader = torch.utils.data.DataLoader(
     dataset=val_dataset,
-    batch_size=opt.batch_size,
-    shuffle=True,
+    batch_size=1,
+    shuffle=False,
     collate_fn=data_utils.collate_fn
 )
 
@@ -144,11 +144,32 @@ def load_data(v, data):
     v.data.resize_(data.size()).copy_(data)
 
 
-def test(net, criterion):
+def test(net, criterion, output_dir):
+    # output_dir = 'devkit/results/VOC2012/Main/comp2_cls_val_xxxx.txt'
     net.eval()
     test_iter = iter(test_loader)
     test_averager = utils.Averager()
-    pass
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    i = 0
+    while i < len(train_loader):
+        img, lbl, box = train_iter.next()
+        load_data(images, img)
+        load_data(labels, lbl)
+        boxes = Variable(torch.FloatTensor(box)).cuda()
+        output = net(images, boxes).squeeze(0)
+        loss = criterion(output, labels)
+        test_averager.add(loss)
+
+        for m in xrange(opt.num_class):
+            cls_file = os.path.join(output_dir, 'cls_val_' + val_dataset.classes[m] + '.txt')
+            with open(cls_file, 'a') as f:
+                f.write(val_dataset.image_index[i] + ' ' + str(output[m]) + '\n')
+
+            print 'im_cls: {:d}/{:d}: {}'.format(i + 1, len(train_loader), val_dataset.image_index[i])
+
+    val_dataset.do_python_eval(output_dir)
 
 
 def train_batch(net, data, criterion, optimizer):
