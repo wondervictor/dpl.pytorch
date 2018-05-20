@@ -103,9 +103,10 @@ def weights_init(m):
 
 
 def adjust_lr(_optimizer, _epoch):
-    lr = opt.lr * 0.5 * (_epoch/5)
+    # lr = opt.lr * 0.5 * (_epoch/5)
     for param_group in _optimizer.param_groups:
-        param_group['lr'] = lr
+        lr = param_group['lr']
+        param_group['lr'] = lr * 0.8
 
 
 dpl = model.DPL(batch_size=opt.batch_size, use_cuda=opt.cuda)
@@ -135,7 +136,7 @@ param_dir = expr_dir+'param/'
 if not os.path.exists(param_dir):
     os.mkdir(param_dir)
 
-optimizer = optim.Adam([{"params": dpl.fcs.parameters()}, {"params": dpl.out.parameters()}], lr=1e-3)
+optimizer = optim.Adam([{"params": dpl.fcs.parameters()}, {"params": dpl.out.parameters()}], lr=1e-2)
 
 averager = utils.Averager()
 
@@ -211,7 +212,7 @@ for epoch in xrange(opt.epoch):
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
 
-    if (epoch+1) % 5 == 0:
+    if (epoch+1) % 2 == 0:
         adjust_lr(optimizer, epoch)
 
 

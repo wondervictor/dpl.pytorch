@@ -106,7 +106,7 @@ ENV/
 .ipynbcheckpoints
 *.pth
 *.log
-
+evaluation
 output
 # Platforms
 .vscode

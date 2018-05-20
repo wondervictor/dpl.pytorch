@@ -46,7 +46,7 @@ val_dataset = pascal_voc.PASCALVOC(
     data_dir=opt.data_dir,
     imageset='val',
     roi_path='./data/',
-    roi_type='dense_box', #selective_search',
+    roi_type='selective_search',
     devkit='./devkit/'
 )
 
@@ -103,16 +103,17 @@ def test(net, criterion, output_dir):
         load_data(images, img)
         load_data(labels, lbl)
         boxes = Variable(torch.FloatTensor(box)).cuda()
-        output = net(images, boxes).squeeze(0)
+        output = net(images, boxes)
         loss = criterion(output, labels)
         test_averager.add(loss)
-
+        output = output.cpu().squeeze(0).data.numpy()
         for m in xrange(opt.num_class):
             cls_file = os.path.join(output_dir, 'comp2_cls_val_' + val_dataset.classes[m] + '.txt')
             with open(cls_file, 'a') as f:
                 f.write(val_dataset.image_index[i] + ' ' + str(output[m]) + '\n')
 
-            print 'im_cls: {:d}/{:d}: {}'.format(i + 1, len(test_loader), val_dataset.image_index[i])
+        print 'im_cls: {:d}/{:d}: {}'.format(i + 1, len(test_loader), val_dataset.image_index[i])
+        i = i + 1
     print("Avg Loss: {}".format(test_averager.val()))
     # val_dataset.do_python_eval(output_dir)
 
