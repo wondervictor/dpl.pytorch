@@ -32,7 +32,7 @@ class MultiSigmoidCrossEntropyLoss(nn.Module):
     def forward(self, s, y):
         # s: batch * class
         # y: batch * class
-        class_num = s.size()[1]
+        class_num = y.size()[1]
 
         loss = self.bce(s, y) * class_num
 

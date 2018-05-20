@@ -14,7 +14,7 @@ def collate_fn(batch):
     lbl = default_collate(transposed[1])
     boxes = []
     box = transposed[2]
-    for i in xrange(len(transposed)):
+    for i in xrange(len(transposed[2])):
         boxes += [[i] + b.tolist() for b in box[i]]
     boxes = np.array(boxes)
 
