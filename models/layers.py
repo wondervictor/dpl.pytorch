@@ -219,6 +219,7 @@ class SPMMaxPooling(nn.Module):
             output = output.cuda()
             max_id = max_id.cuda()
 
+        # TODO: Optimize its performance
         for i in xrange(num_rois):
             roi = rois[i].data
             batch_id = int(roi[0])
@@ -241,7 +242,7 @@ class SPMMaxPooling(nn.Module):
             for j in xrange(num_grids):
                 for c in xrange(x_dim):
                     if max_id[i, j, c].data[0] >= 0:
-                        output[i, j, c] = x[i, c]
+                        output[i, j, c] = x[max_id[i, j, c].data[0], c]
                     else:
                         output[i, j, c] = 0
         return output
@@ -265,7 +266,6 @@ def __test_spm__():
     optimizer.zero_grad()
     _loss.backward()
     optimizer.step()
-
 
 
 
