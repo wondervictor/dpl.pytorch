@@ -34,6 +34,7 @@ parser.add_argument('--save_interval', type=int, default=5, help='save model int
 parser.add_argument('--name', type=str, required=True, help='expriment name')
 parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
+parser.add_argument('--proposal', type=str, default='selective_search', help='proposal type:[selective_search, dense_box]')
 
 
 opt = parser.parse_args()
@@ -62,7 +63,7 @@ train_dataset = pascal_voc.PASCALVOC(
     data_dir=opt.data_dir,
     imageset='train',
     roi_path='./data/',
-    roi_type='selective_search',
+    roi_type=opt.proposal,
     devkit='./devkit/'
 )
 
@@ -71,7 +72,7 @@ val_dataset = pascal_voc.PASCALVOC(
     data_dir=opt.data_dir,
     imageset='val',
     roi_path='./data/',
-    roi_type='#selective_search',
+    roi_type=opt.proposal,
     devkit='./devkit/'
 )
 
@@ -103,13 +104,13 @@ def weights_init(m):
 
 
 def adjust_lr(_optimizer, _epoch):
-    # lr = opt.lr * 0.5 * (_epoch/5)
+    lr = opt.lr * 0.5 * (_epoch/5)
     for param_group in _optimizer.param_groups:
         lr = param_group['lr']
         param_group['lr'] = lr * 0.5
 
 
-dpl = model.DPL(batch_size=opt.batch_size, use_cuda=opt.cuda)
+dpl = model.DPL(use_cuda=opt.cuda)
 dpl.apply(weights_init)
 dpl.train()
 
@@ -136,7 +137,7 @@ param_dir = expr_dir+'param/'
 if not os.path.exists(param_dir):
     os.mkdir(param_dir)
 
-optimizer = optim.Adam(dpl.parameters(), lr=1e-3)
+optimizer = optim.Adam(params=dpl.head_network.parameters(), lr=1e-4, weight_decay=1e-4)
 
 averager = utils.Averager()
 
@@ -175,19 +176,21 @@ def test(net, criterion, output_dir):
 
 def train_batch(net, data, criterion, optimizer):
 
-    img, lbl, box = data
-
+    img, lbl, box, shapes = data
     load_data(images, img)
     load_data(labels, lbl)
     boxes = Variable(torch.FloatTensor(box)).cuda()
-    output = net(images, boxes)
-    loss = criterion(output, labels)
+    shapes = Variable(torch.FloatTensor(shapes)).cuda()
+    cls_1, cls_2 = net(images, shapes, boxes)
 
+    loss1 = criterion(cls_1, labels)
+    loss2 = criterion(cls_2, labels)
+    loss = loss1 + loss2
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
 
-    return loss
+    return loss.data[0]
 
 
 logger.log('starting to train')
@@ -211,9 +214,6 @@ for epoch in xrange(opt.epoch):
         pass
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
-
-    if (epoch+1) % 5 == 0:
-        adjust_lr(optimizer, epoch)
 
 
 

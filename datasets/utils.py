@@ -17,7 +17,8 @@ def collate_fn(batch):
     for i in xrange(len(transposed[2])):
         boxes += [[i] + b.tolist() for b in box[i]]
     boxes = np.array(boxes)
+    shapes = default_collate(transposed[3])
 
-    return imgs, lbl, boxes
+    return imgs, lbl, boxes, shapes
 
 

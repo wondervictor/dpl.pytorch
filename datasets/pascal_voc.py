@@ -266,12 +266,12 @@ class PASCALVOC(Dataset):
 
         roi = self.rois[img_name]
         label = self._labels[img_name]['labels']
-        w, h = img.size
+        h, w = img.size
         max_size = max(h, w)
         ratio = float(self.img_size) / float(max_size)
         w = int(w*ratio)
         h = int(h*ratio)
-        img = img.resize((w, h))
+        img = img.resize((h, w))
         img = self.toTensor(img)
         roi = roi * ratio
         if len(roi) > 2000:
@@ -279,7 +279,7 @@ class PASCALVOC(Dataset):
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
         wrap_img[:, 0:w, 0:h] = img
-        return wrap_img, label, roi
+        return wrap_img, label, roi, np.array([w, h], dtype=np.float32)
 
 
 
