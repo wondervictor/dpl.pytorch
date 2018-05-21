@@ -7,7 +7,6 @@ extern "C" {
 #endif
 
 #include <THC/THC.h>
-#include <cxxabi.h>
 
 extern THCState *state;
 #include "spmmax_pooling_cuda.h"
@@ -32,7 +31,7 @@ int spmmax_pooling_forward_cuda(THCudaTensor *x, THCudaTensor *shapes, THCudaTen
   float* shapes_data = THCudaTensor_data(state, shapes);
   float* rois_data = THCudaTensor_data(state, rois);
   float* output_data = THCudaTensor_data(state, output);
-  int64_t* max_ids_data = THCudaIntTensor_data(state, max_ids);
+  int* max_ids_data = THCudaIntTensor_data(state, max_ids);
 
   spmmax_pooling_forward_kernel(batch_size, num_grids, feature_size, num_rois, x_data, shapes_data,
                                 rois_data, output_data, max_ids_data);
@@ -52,7 +51,7 @@ int spmmax_pooling_backward_cuda(THCudaTensor *grad_input, THCudaIntTensor *max_
 
   float* grad_output_data = THCudaTensor_data(state, grad_output);
   float* grad_input_data = THCudaTensor_data(state, grad_input);
-  int64_t* max_ids_data = THCudaIntTensor_data(state, max_ids);
+  int* max_ids_data = THCudaIntTensor_data(state, max_ids);
 
   spmmax_pooling_backward_kernel(batch_size, num_grids, feature_size, num_rois, grad_input_data,
                                  grad_output_data, max_ids_data);
