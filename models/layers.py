@@ -220,6 +220,7 @@ class SPMMaxPooling(nn.Module):
             max_id = max_id.cuda()
 
         # TODO: Optimize its performance
+
         for i in xrange(num_rois):
             roi = rois[i].data
             batch_id = int(roi[0])
