@@ -32,7 +32,7 @@ class MultiSigmoidCrossEntropyLoss(nn.Module):
     def forward(self, s, y):
         # s: batch * class
         # y: batch * class
-        class_num = y.size()[1]
+        class_num = s.size()[1]
 
         loss = self.bce(s, y) * class_num
 
@@ -154,9 +154,9 @@ class ROIPooling(nn.Module):
         return self.__class__.__name__ + ("Pool Size:{} Scale: {}".format(self.pool_size, self.scale))
 
 
-class PatchPooling(nn.Module):
+class MaxPatchPooling(nn.Module):
 
-    """ PatchPooling Layer
+    """ MaxPatchPooling Layer
     Args:
         batch_size (int): batchsize of the patches
     Inputs:
@@ -169,14 +169,14 @@ class PatchPooling(nn.Module):
 
     """
     def __init__(self, cuda):
-        super(PatchPooling, self).__init__()
+        super(MaxPatchPooling, self).__init__()
         self.cuda = cuda
 
-    def forward(self, batch_size, patches, patch_ids):
+    def forward(self, patches, batch_size, patch_ids):
         # patches: torch.FloatTensor, NxC
         # patch_ids: numpy array, Nx1
         num_patch, num_features = patches.size()
-        output = Variable(torch.FloatTensor(batch_size, num_features))
+        output = Variable(torch.zeros((batch_size, num_features)))
         if self.cuda:
             output = output.cuda()
         for i in xrange(batch_size):
@@ -198,16 +198,15 @@ class SPMMaxPooling(nn.Module):
     SPM = [0, 1, 0, 1, 0, 0.5, 0, 0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0, 0.5,
            0.5, 1, 0.5, 1, 0, 1, 0, 0.33, 0, 1, 0.33, 0.67, 0, 1, 0.67, 1]
 
-    def __init__(self):
+    def __init__(self, cuda):
         super(SPMMaxPooling, self).__init__()
         self.num_grids = 8
-        self.fc = nn.Linear(6, 7)
+        self.cuda = cuda
 
     def forward(self, x, shapes, rois):
         # x:        num_rois x dimension
         # shapes:   batch x 2
         # rois:     num_rois x 5
-        x = self.fc(x)
         batch_size = shapes.size()[0]
         num_rois = rois.size()[0]
         x_dim = x.size()[1]
@@ -215,6 +214,10 @@ class SPMMaxPooling(nn.Module):
         tmp = Variable(torch.zeros((batch_size, num_grids, x_dim)), requires_grad=False)  # -1e-12
         output = Variable(torch.zeros((batch_size, num_grids, x_dim)))  # -1e-12
         max_id = Variable(torch.zeros((batch_size, num_grids, x_dim)), requires_grad=False).int() - 1
+        if self.cuda:
+            tmp = tmp.cuda()
+            output = output.cuda()
+            max_id = max_id.cuda()
 
         for i in xrange(num_rois):
             roi = rois[i].data

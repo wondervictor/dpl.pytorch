@@ -29,6 +29,7 @@ parser.add_argument('--name', type=str, required=True, help='expriment name')
 parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
 parser.add_argument('--param', type=str, required=True, help='model params path')
+parser.add_argument('--proposal', type=str, default='selective_search', help='proposal type:[selective_search, dense_box]')
 
 
 opt = parser.parse_args()
@@ -46,7 +47,7 @@ val_dataset = pascal_voc.PASCALVOC(
     data_dir=opt.data_dir,
     imageset='val',
     roi_path='./data/',
-    roi_type='selective_search',
+    roi_type=opt.proposal,
     devkit='./devkit/'
 )
 
@@ -59,7 +60,7 @@ test_loader = torch.utils.data.DataLoader(
 )
 
 batch_size=1
-dpl = model.DPL(batch_size=batch_size, use_cuda=opt.cuda)
+dpl = model.DPL(use_cuda=opt.cuda)
 
 criterion = layers.MultiSigmoidCrossEntropyLoss()
 
@@ -99,18 +100,22 @@ def test(net, criterion, output_dir):
 
     i = 0
     while i < len(test_loader):
-        img, lbl, box = test_iter.next()
+        img, lbl, box, shapes = test_iter.next()
         load_data(images, img)
         load_data(labels, lbl)
         boxes = Variable(torch.FloatTensor(box)).cuda()
-        output = net(images, boxes)
-        loss = criterion(output, labels)
-        test_averager.add(loss)
-        output = output.cpu().squeeze(0).data.numpy()
+        cls_score1, cls_score2 = net(images, shapes, boxes)
+        loss1 = criterion(cls_score1, labels)
+        loss2 = criterion(cls_score2, labels)
+        loss = loss1 + loss2
+        test_averager.add(loss.data[0])
+        # output = loss.cpu().squeeze(0).data.numpy()
+        cls_score = cls_score1 + cls_score2
+        cls_score = cls_score.cpu().squeeze(0).data.numpy()
         for m in xrange(opt.num_class):
             cls_file = os.path.join(output_dir, 'comp2_cls_val_' + val_dataset.classes[m] + '.txt')
             with open(cls_file, 'a') as f:
-                f.write(val_dataset.image_index[i] + ' ' + str(output[m]) + '\n')
+                f.write(val_dataset.image_index[i] + ' ' + str(cls_score[m]) + '\n')
 
         print 'im_cls: {:d}/{:d}: {}'.format(i + 1, len(test_loader), val_dataset.image_index[i])
         i = i + 1
