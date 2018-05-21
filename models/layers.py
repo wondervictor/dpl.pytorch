@@ -235,15 +235,15 @@ class SPMMaxPooling(nn.Module):
 
                     # output[batch_id, j] = torch.max(x[i], output[batch_id, j])
                     for c in xrange(x_dim):
-                        if x[i, c] > tmp[batch_id, j, c]:
+                        if x[i, c].data[0] > tmp[batch_id, j, c].data[0]:
                             tmp[batch_id, j, c] = x[i, c]
                             max_id[batch_id, j, c] = i
 
         for i in xrange(batch_size):
             for j in xrange(num_grids):
                 for c in xrange(x_dim):
-                    if max_id[i, j, c] >= 0:
-                        output[i, j, c] = x[max_id[i, j, c], c]
+                    if max_id[i, j, c].data[0] >= 0:
+                        output[i, j, c] = x[max_id[i, j, c].data[0], c]
                     else:
                         output[i, j, c] = 0
         return output

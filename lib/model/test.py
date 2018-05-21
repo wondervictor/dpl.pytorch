@@ -22,7 +22,6 @@ class TestModule(nn.Module):
 
     def forward(self, x, shapes, rois):
         x = self.fc(x)
-        print(x.size())
         x = self.spm(x, shapes, rois)
         return x
 
@@ -40,29 +39,29 @@ def weights_init(m):
 
 test1 = TestModule()
 test2 = TestModule()
-test2 = test2.cuda()
+test2 = test2.cuda(0)
 test2.apply(weights_init)
 test1.apply(weights_init)
 # spm = spmmax_pooling.SPMMaxPooling()
 # spm2 = SPMMaxPoolingXX(False)
-x1 = Variable(torch.rand([5, 6]))
-x2 = x1.cuda()
+x1 = Variable(torch.rand([5, 6])).float()
+x2 = x1.cuda(0)
 shapes1 = Variable(torch.FloatTensor([[10, 8], [15, 20], [32, 16]]))
-shapes2 = shapes1.cuda()
+shapes2 = shapes1.cuda(0)
 rois1 = Variable(torch.FloatTensor([[0, 2, 4, 5, 6], [1, 3, 1, 6, 9], [1, 12, 8, 14, 13], [2, 3, 6, 8, 12, ], [2, 3, 4, 15, 13]]))
-rois2 = rois1.cuda()
-
+rois2 = rois1.cuda(0)
 loss_criterion1 = nn.MSELoss()
-loss_criterion2 = nn.MSELoss().cuda()
-
+loss_criterion2 = nn.MSELoss().cuda(0)
 
 pred1 = test1(x1, shapes1, rois1)
 pred2 = test2(x2, shapes2, rois2)
-
-print pred1 - pred2.cpu()
-
+print pred1
+print pred2.cpu().data.numpy()
+print pred2.size()
+# print pred1 - pred2.cpu()
+print pred2.data
 y = Variable(torch.rand([3, 8, 7]))
-y1 = y.cuda()
+y1 = y.cuda(0)
 
 _loss1 = loss_criterion1(pred1, y)
 _loss2 = loss_criterion2(pred2, y)

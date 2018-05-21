@@ -279,7 +279,7 @@ class PASCALVOC(Dataset):
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
         wrap_img[:, 0:w, 0:h] = img
-        return wrap_img, label, roi, np.array([w, h])
+        return wrap_img, label, roi, np.array([w, h], dtype=np.float32)
 
 
 

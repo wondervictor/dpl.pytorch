@@ -60,6 +60,7 @@ class PatchHeadNetwork(nn.Module):
         # patch_features: N * 4096
         encoded_features = self.patch_encoder(patch_features)
         spm_features = self.spm_pooling(encoded_features, shapes, rois)
+        spm_features = spm_features.view(batch_size, 256 * 8)
         cls_score1 = self.cls_score1(spm_features)
         cls_score2_features = self.cls_score2(patch_features)
         cls_score2 = self.patch_pooling(cls_score2_features, batch_size, output_batch_id)

@@ -177,7 +177,6 @@ def test(net, criterion, output_dir):
 def train_batch(net, data, criterion, optimizer):
 
     img, lbl, box, shapes = data
-
     load_data(images, img)
     load_data(labels, lbl)
     boxes = Variable(torch.FloatTensor(box)).cuda()
@@ -215,9 +214,6 @@ for epoch in xrange(opt.epoch):
         pass
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
-
-    # if (epoch+1) % 2 == 0:
-    #    adjust_lr(optimizer, epoch)
 
 
 

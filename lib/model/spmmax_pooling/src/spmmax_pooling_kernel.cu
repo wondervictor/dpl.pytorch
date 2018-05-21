@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include "spmmax_pooling_kernel.h"
 
 __global__ void spmmax_pooling_forward(int batch_size, int num_grids, int feature_size,
@@ -16,7 +17,7 @@ __global__ void spmmax_pooling_forward(int batch_size, int num_grids, int featur
   int roi_id = thread_idx/(num_grids * feature_size);
   int grid_id = (thread_idx - roi_id * num_grids * feature_size)/feature_size;
   int feature_id = thread_idx - roi_id * num_grids * feature_size - grid_id * feature_size;
-
+ 
   int batch_id = (int)rois_data[roi_id*5];
   float center_x = (rois_data[roi_id*5+1] + rois_data[roi_id*5+3])/(2*shapes_data[batch_id*2+0]);
   float center_y = (rois_data[roi_id*5+2] + rois_data[roi_id*5+4])/(2*shapes_data[batch_id*2+1]);
@@ -58,9 +59,9 @@ int spmmax_pooling_forward_kernel(int batch_size, int num_grids, int feature_siz
   const int kThreadsPerBlock = 1024;
   dim3 threads(kThreadsPerBlock);
   dim3 blocks((output_size + kThreadsPerBlock - 1)/kThreadsPerBlock);
+  printf("otuput: %d\n", output_size);
   spmmax_pooling_forward<<<blocks, threads>>>(batch_size, num_grids, feature_size, num_rois, x_data,
       shapes_data,rois_data, output_data, max_ids_data, spm);
-
   err = cudaGetLastError();
   if(cudaSuccess != err)
   {
