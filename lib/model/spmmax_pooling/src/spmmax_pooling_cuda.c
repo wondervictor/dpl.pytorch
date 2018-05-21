@@ -2,9 +2,9 @@
 // Author: Vic Chan
 // Date: 2018/5/21
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 #include <THC/THC.h>
 
@@ -34,7 +34,7 @@ int spmmax_pooling_forward_cuda(THCudaTensor *x, THCudaTensor *shapes, THCudaTen
   int* max_ids_data = THCudaIntTensor_data(state, max_ids);
 
   spmmax_pooling_forward_kernel(batch_size, num_grids, feature_size, num_rois, x_data, shapes_data,
-                                rois_data, output_data, max_ids_data);
+                                rois_data, output_data, max_ids_data, stream);
 
   return 1;
 }
@@ -54,12 +54,12 @@ int spmmax_pooling_backward_cuda(THCudaTensor *grad_input, THCudaIntTensor *max_
   int* max_ids_data = THCudaIntTensor_data(state, max_ids);
 
   spmmax_pooling_backward_kernel(batch_size, num_grids, feature_size, num_rois, grad_input_data,
-                                 grad_output_data, max_ids_data);
+                                 grad_output_data, max_ids_data, stream);
 
   return 1;
 
 }
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif

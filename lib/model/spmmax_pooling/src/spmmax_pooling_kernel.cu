@@ -1,9 +1,9 @@
 // SPM Max Pooling CUDA
 // Author: Vic Chan
 // Date: 2018/5/21
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 #include <stdio.h>
 #include "spmmax_pooling_kernel.h"
@@ -101,6 +101,6 @@ const int num_rois, const float* grad_input_data, float* grad_output_data,  int*
 }
 
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
