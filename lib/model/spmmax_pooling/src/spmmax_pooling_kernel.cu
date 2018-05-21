@@ -8,9 +8,9 @@ extern "C" {
 #include <stdio.h>
 #include "spmmax_pooling_kernel.h"
 
-__global__ void spmmax_pooling_forward(int batch_size, int num_grids, int feature_size,
-                                       int num_rois, float* x_data, float* shapes_data, float* rois_data,
-                                       float* output_data, int* max_ids_data, float* spm){
+__global__ void spmmax_pooling_forward(const int batch_size, const int num_grids, const int feature_size,
+                                       const int num_rois, const float* x_data, const float* shapes_data,
+                                       const float* rois_data, float* output_data, int* max_ids_data, const float* spm){
 
   int thread_idx = threadIdx.x + blockIdx.x*blockDim.x;
   if (thread_idx < num_rois * num_grids * feature_size) {
@@ -34,8 +34,8 @@ __global__ void spmmax_pooling_forward(int batch_size, int num_grids, int featur
   __syncthreads();
 }
 
-__global__ void spmmax_pooling_backward(int batch_size, int num_grids, int feature_size, int num_rois,
-                                        float* grad_input_data,float* grad_output_data, int* max_ids_data) {
+__global__ void spmmax_pooling_backward(const int batch_size, const int num_grids, const int feature_size,
+const int num_rois, const float* grad_input_data, float* grad_output_data, const int* max_ids_data) {
 
   int thread_idx = threadIdx.x + blockIdx.x*blockDim.x;
   if (thread_idx < batch_size * num_grids * feature_size) {
@@ -53,8 +53,9 @@ __global__ void spmmax_pooling_backward(int batch_size, int num_grids, int featu
   __syncthreads();
 }
 
-int spmmax_pooling_forward_kernel(int batch_size, int num_grids, int feature_size, int num_rois, float* x_data,
-                                  float* shapes_data, float* rois_data, float* output_data, int* max_ids_data) {
+int spmmax_pooling_forward_kernel(const int batch_size, const int num_grids, const int feature_size, const int num_rois,
+const float* x_data,const float* shapes_data, const float* rois_data, float* output_data, int* max_ids_data,
+cudaStream_t stream) {
   int output_size = num_rois * num_grids * feature_size;
   cudaError_t err;
 
@@ -64,10 +65,8 @@ int spmmax_pooling_forward_kernel(int batch_size, int num_grids, int feature_siz
   const int kThreadsPerBlock = 1024;
   dim3 threads(kThreadsPerBlock);
   int block = (output_size + kThreadsPerBlock - 1)/kThreadsPerBlock;
-  if (block == 0)
-    block = 1;
   dim3 blocks(block);
-  spmmax_pooling_forward<<<blocks, threads>>>(batch_size, num_grids, feature_size, num_rois, x_data,
+  spmmax_pooling_forward<<<blocks, threads, stream>>>(batch_size, num_grids, feature_size, num_rois, x_data,
       shapes_data,rois_data, output_data, max_ids_data, spm);
   err = cudaGetLastError();
   if(cudaSuccess != err)
@@ -79,18 +78,16 @@ int spmmax_pooling_forward_kernel(int batch_size, int num_grids, int feature_siz
   return 1;
 }
 
-int spmmax_pooling_backward_kernel(int batch_size, int num_grids, int feature_size, int num_rois, float* grad_input_data,
-                                   float* grad_output_data, int* max_ids_data) {
+int spmmax_pooling_backward_kernel(const int batch_size, const int num_grids, const int feature_size,
+const int num_rois, const float* grad_input_data, float* grad_output_data,  int* max_ids_data, cudaStream_t stream) {
 
   const int kThreadsPerBlock = 1024;
   int output_size = batch_size * num_grids * feature_size;
   cudaError_t err;
   dim3 threads(kThreadsPerBlock);
   int block = (output_size + kThreadsPerBlock - 1)/kThreadsPerBlock;
-  if (block == 0)
-    block = 1;
   dim3 blocks(block);
-  spmmax_pooling_backward<<<blocks, threads>>>(batch_size, num_grids, feature_size, num_rois, grad_input_data,
+  spmmax_pooling_backward<<<blocks, threads, stream>>>(batch_size, num_grids, feature_size, num_rois, grad_input_data,
       grad_output_data, max_ids_data);
 
   err = cudaGetLastError();

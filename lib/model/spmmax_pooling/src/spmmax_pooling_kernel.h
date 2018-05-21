@@ -6,11 +6,11 @@
 extern "C" {
 #endif
 
-int spmmax_pooling_forward_kernel(int batch_size, int num_grids, int feature_size, int num_rois, float* x_data,
-                                  float* shapes_data, float* rois_data, float* output_data, int* max_ids_data);
+int spmmax_pooling_forward_kernel(const int batch_size, const int num_grids, const int feature_size, const int num_rois,
+const float* x_data,const float* shapes_data, const float* rois_data, float* output_data, int* max_ids_data, cudaStream_t stream);
 
-int spmmax_pooling_backward_kernel(int batch_size, int num_grids, int feature_size, int num_rois, float* grad_input_data,
-                                   float* grad_output_data, int* max_ids_data);
+int spmmax_pooling_backward_kernel(const int batch_size, const int num_grids, const int feature_size,
+const int num_rois, const float* grad_input_data, float* grad_output_data, int* max_ids_data, cudaStream_t stream);
 
 #ifdef __cplusplus
 }
