@@ -32,7 +32,7 @@ __global__ void spmmax_pooling_forward(int batch_size, int num_grids, int featur
   __syncthreads();
 }
 
-__global__ void spmmax_pooling_backward(int num_threads, int batch_size, int num_grids, int feature_size, int num_rois,
+__global__ void spmmax_pooling_backward(int batch_size, int num_grids, int feature_size, int num_rois,
                                         float* grad_input_data,float* grad_output_data, int* max_ids_data) {
 
   int thread_idx = threadIdx.x + blockIdx.x*blockDim.x;
