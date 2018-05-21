@@ -10,7 +10,7 @@ extern "C" {
 #include "spmmax_pooling.h"
 
 int spm_max_pooling_forward(THFloatTensor* x, THFloatTensor* shapes, THFloatTensor* rois, THFloatTensor* output,
-                                THLongTensor* max_ids) {
+                            THIntTensor* max_ids) {
   float spm[32] = {0, 1, 0, 1, 0, 0.5, 0, 0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0, 0.5, 0.5,
                    1, 0.5, 1, 0, 1, 0, 0.33, 0, 1, 0.33, 0.67, 0, 1, 0.67, 1};
   int num_grids = 8;
@@ -23,7 +23,7 @@ int spm_max_pooling_forward(THFloatTensor* x, THFloatTensor* shapes, THFloatTens
   float* shaps_data = THFloatTensor_data(shapes);
   float* rois_data = THFloatTensor_data(rois);
   float* output_data = THFloatTensor_data(output);
-  int64_t* maxid_data = THLongTensor_data(max_ids);
+  int* maxid_data = THIntTensor_data(max_ids);
   memset(output_data, 0, output_size);
   memset(maxid_data, -1, output_size);
   for(int i = 0; i < num_rois; i ++) {
@@ -44,14 +44,14 @@ int spm_max_pooling_forward(THFloatTensor* x, THFloatTensor* shapes, THFloatTens
   return 1;
 }
 
-int spm_max_pooling_backward(THFloatTensor* grad_input, THLongTensor* max_ids, THFloatTensor* grad_output) {
+int spm_max_pooling_backward(THFloatTensor* grad_input, THIntTensor* max_ids, THFloatTensor* grad_output) {
   // grad_input: batch_id x num_grids x feature_size
   // grad_output: num_rois x feature_size
   float* gradout_data = THFloatTensor_data(grad_output);
   float* gradin_data = THFloatTensor_data(grad_input);
-  int64_t* maxid_data = THLongTensor_data(max_ids);
+  int* maxid_data = THIntTensor_data(max_ids);
   int feature_size = (int)THFloatTensor_size(grad_output, 1);
-  int batch_size = (int)THLongTensor_size(max_ids, 0);
+  int batch_size = (int)THIntTensor_size(max_ids, 0);
   int num_grids = 8;
   for(int i = 0; i < batch_size; i ++) {
     for (int j = 0; j < num_grids; j ++) {
