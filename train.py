@@ -81,14 +81,16 @@ train_loader = torch.utils.data.DataLoader(
     dataset=train_dataset,
     batch_size=opt.batch_size,
     shuffle=True,
-    collate_fn=data_utils.collate_fn
+    collate_fn=data_utils.collate_fn,
+    num_workers=2
 )
 
 test_loader = torch.utils.data.DataLoader(
     dataset=val_dataset,
     batch_size=1,
     shuffle=False,
-    collate_fn=data_utils.collate_fn
+    collate_fn=data_utils.collate_fn,
+    num_workers=2
 )
 
 
@@ -111,7 +113,6 @@ def adjust_lr(_optimizer, _epoch):
         param_group['lr'] = lr * 0.5
 
 
-
 log_dir = expr_dir+'log/'
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
@@ -124,6 +125,8 @@ if not os.path.exists(param_dir):
 criterion = layers.MultiSigmoidCrossEntropyLoss()
 
 dpl = model.DPL(use_cuda=opt.cuda)
+dpl = torch.nn.DataParallel(dpl, device_ids=range(torch.cuda.device_count()))
+
 dpl.apply(weights_init)
 dpl.train()
 logger = utils.Logger(stdio=True, log_file=log_dir+"training.log")
