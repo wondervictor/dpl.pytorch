@@ -21,6 +21,7 @@ print(this_file)
 extra_objects = ['src/spmmax_pooling_kernel.cu.o']
 extra_objects = [os.path.join(this_file, fname) for fname in extra_objects]
 print extra_objects
+
 ffi = create_extension(
     '_ext.spmmax_pooling',
     headers=headers,
@@ -30,8 +31,6 @@ ffi = create_extension(
     with_cuda=with_cuda,
     extra_objects=extra_objects
 )
-
-
 
 if __name__ == '__main__':
     ffi.build()

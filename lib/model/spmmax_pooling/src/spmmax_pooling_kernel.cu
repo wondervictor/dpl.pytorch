@@ -16,7 +16,7 @@ __global__ void spmmax_pooling_forward(const int num_threads, const int batch_si
                                        const int num_rois, const float* x_data, const float* shapes_data,
                                        const float* rois_data, float* output_data, int* max_ids_data){
 
-  __shared__ float spm[32] = {0, 1, 0, 1, 0, 0.5, 0, 0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0, 0.5, 0.5,
+  float spm[32] = {0, 1, 0, 1, 0, 0.5, 0, 0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0, 0.5, 0.5,
                    1, 0.5, 1, 0, 1, 0, 0.33, 0, 1, 0.33, 0.67, 0, 1, 0.67, 1};
 
   CUDA_1D_KERNEL_LOOP(thread_idx, num_threads) {
@@ -62,9 +62,6 @@ int spmmax_pooling_forward_kernel(const int batch_size, const int num_grids, con
                                   cudaStream_t stream) {
   int output_size = num_rois * num_grids * feature_size;
   cudaError_t err;
-
-  float spm[32] = {0, 1, 0, 1, 0, 0.5, 0, 0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0, 0.5, 0.5,
-                   1, 0.5, 1, 0, 1, 0, 0.33, 0, 1, 0.33, 0.67, 0, 1, 0.67, 1};
 
   const int kThreadsPerBlock = 1024;
   dim3 threads(kThreadsPerBlock);
