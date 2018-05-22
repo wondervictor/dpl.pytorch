@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 sys.path.append('./lib')
 from model.roi_align.modules import roi_align
-
+from model.spmmax_pooling.modules import spmmax_pooling
 
 class MultiSigmoidCrossEntropyLoss(nn.Module):
     """ MultiClass Sigmoid Cross Entropy Loss
@@ -195,6 +195,16 @@ class ROIAlign(nn.Module):
 
 
 class SPMMaxPooling(nn.Module):
+
+    def __init__(self):
+        super(SPMMaxPooling, self).__init__()
+        self.spm = spmmax_pooling.SPMMaxPooling()
+
+    def forward(self, x, shapes, rois):
+        return self.spm(x, shapes, rois)
+
+
+class SPMMaxPooling1(nn.Module):
     SPM = [0, 1, 0, 1, 0, 0.5, 0, 0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0, 0.5,
            0.5, 1, 0.5, 1, 0, 1, 0, 0.33, 0, 1, 0.33, 0.67, 0, 1, 0.67, 1]
 
