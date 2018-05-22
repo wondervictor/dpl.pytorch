@@ -34,7 +34,8 @@ parser.add_argument('--save_interval', type=int, default=5, help='save model int
 parser.add_argument('--name', type=str, required=True, help='expriment name')
 parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
-parser.add_argument('--proposal', type=str, default='selective_search', help='proposal type:[selective_search, dense_box]')
+parser.add_argument('--proposal', type=str, default='selective_search', help='proposal:[selective_search, dense_box]')
+parser.add_argument('--resume', action='store_true', help='use saved parameters to resume')
 
 
 opt = parser.parse_args()
@@ -110,34 +111,38 @@ def adjust_lr(_optimizer, _epoch):
         param_group['lr'] = lr * 0.5
 
 
-dpl = model.DPL(use_cuda=opt.cuda)
-dpl.apply(weights_init)
-dpl.train()
-
-criterion = layers.MultiSigmoidCrossEntropyLoss()
-
-print(dpl)
-print("---------- DPL Model Init Finished -----------")
 
 log_dir = expr_dir+'log/'
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
+
+param_dir = expr_dir+'param/'
+if not os.path.exists(param_dir):
+    os.mkdir(param_dir)
+
+criterion = layers.MultiSigmoidCrossEntropyLoss()
+
+dpl = model.DPL(use_cuda=opt.cuda)
+dpl.apply(weights_init)
+dpl.train()
 logger = utils.Logger(stdio=True, log_file=log_dir+"training.log")
 images = Variable(torch.FloatTensor(opt.batch_size, 3, opt.img_size, opt.img_size))
 labels = Variable(torch.FloatTensor(opt.batch_size, opt.num_class))
-
 if opt.cuda:
     criterion = criterion.cuda()
     dpl = dpl.cuda()
     images = images.cuda()
     labels = labels.cuda()
 
-param_dir = expr_dir+'param/'
-if not os.path.exists(param_dir):
-    os.mkdir(param_dir)
+if opt.resume and os.path.exists("{}_result.pth".format(param_dir)):
+    dpl.load_state_dict(torch.load("{}_result.pth".format(param_dir)))
+    print("Load params from resume data")
+print(dpl)
+print("---------- DPL Model Init Finished -----------")
 
-optimizer = optim.Adam(params=dpl.head_network.parameters(), lr=1e-4, weight_decay=1e-4)
+
+optimizer = optim.Adam(params=dpl.head_network.parameters(), lr=2e-4, weight_decay=1e-4)
 
 averager = utils.Averager()
 
@@ -214,8 +219,6 @@ for epoch in xrange(opt.epoch):
         pass
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
-
-    if (epoch+1) % 5 == 0:
-        adjust_lr(optimizer, epoch)
+    torch.save(dpl.state_dict(), "{}_result.pth".format(param_dir))
 
 
