@@ -32,7 +32,7 @@ class PatchHeadNetwork(nn.Module):
         self.cls_score1 = nn.Linear(256*8, num_classes)
         self.cls_score2 = nn.Linear(4096, num_classes)
         self.patch_pooling = layers.MaxPatchPooling(use_cuda)
-        self.spm_pooling = layers.SPMMaxPooling(use_cuda)
+        self.spm_pooling = layers.SPMMaxPooling()
 
     def forward(self, features, shapes, rois):
         # N denotes the num_rois, B denotes the batchsize
