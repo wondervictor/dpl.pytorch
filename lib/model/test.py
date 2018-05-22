@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from spmmax_pooling.modules import spmmax_pooling
 
-random_seed = 2781
+random_seed = np.random.randint(0, 10000)
 random.seed(random_seed)
 np.random.seed(random_seed)
 torch.manual_seed(random_seed)
@@ -56,15 +56,13 @@ loss_criterion2 = nn.MSELoss().cuda(0)
 pred1 = test1(x1, shapes1, rois1)
 pred2 = test2(x2, shapes2, rois2)
 print pred1
-print pred2.cpu().data.numpy()
-print pred2.size()
 # print pred1 - pred2.cpu()
-print pred2.data
+print pred2
 y = Variable(torch.rand([3, 8, 7]))
 y1 = y.cuda(0)
 
 _loss1 = loss_criterion1(pred1, y)
-_loss2 = loss_criterion2(pred2, y)
+_loss2 = loss_criterion2(pred2, y1)
 print _loss1, _loss2
 import torch.optim as optim
 #
@@ -87,4 +85,3 @@ optimizer2.step()
 
 print grad1
 print grad2
-print grad1-grad2.cpu()

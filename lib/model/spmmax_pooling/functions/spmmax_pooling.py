@@ -22,7 +22,7 @@ class SPMMaxPoolingFunction(Function):
 
         output = x.new(batch_size, self.num_grids, feature_size).zero_()
 
-        max_id = torch.zeros((batch_size, self.num_grids, feature_size)).int()  # x.new(batch_size, self.num_grids, feature_size).zero_().int()
+        max_id = torch.zeros((batch_size, self.num_grids, feature_size)).int()-1  # x.new(batch_size, self.num_grids, feature_size).zero_().int()
         if output.is_cuda:
             max_id = max_id.cuda()
         if x.is_cuda:
@@ -34,6 +34,7 @@ class SPMMaxPoolingFunction(Function):
                 x, shapes, rois, output, max_id
             )
         self.max_id = max_id
+        print self.max_id
         return output
 
     def backward(self, grad_input):
