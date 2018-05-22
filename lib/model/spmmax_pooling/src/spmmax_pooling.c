@@ -24,8 +24,8 @@ int spm_max_pooling_forward(THFloatTensor* x, THFloatTensor* shapes, THFloatTens
   float* rois_data = THFloatTensor_data(rois);
   float* output_data = THFloatTensor_data(output);
   int* maxid_data = THIntTensor_data(max_ids);
-  memset(output_data, 0, output_size);
-  memset(maxid_data, -1, output_size);
+  // memset(output_data, 0, output_size);
+  // memset(maxid_data, -1, output_size);
   for(int i = 0; i < num_rois; i ++) {
     int batch_id = (int)rois_data[i * 5 + 0];
     float center_x = (rois_data[i*5+1] + rois_data[i*5+3])/(2*shaps_data[batch_id*2+0]);
@@ -33,7 +33,8 @@ int spm_max_pooling_forward(THFloatTensor* x, THFloatTensor* shapes, THFloatTens
     for(int j = 0; j < num_grids; j ++) {
       if (center_x >= spm[j*4+0] && center_x < spm[j*4+1] && center_y >= spm[j*4+2] && center_y < spm[j*4+3]) {
         for(int c = 0; c < feature_size; c++) {
-          if (x_data[i*feature_size+c] > output_data[batch_id*num_grids*feature_size+j*feature_size+c]) {
+          if (maxid_data[batch_id*num_grids*feature_size+j*feature_size+c] == -1 ||x_data[i*feature_size+c] > output_data[batch_id*num_grids*feature_size+j*feature_size+c]) {
+
             output_data[batch_id*num_grids*feature_size+j*feature_size+c] = x_data[i*feature_size+c];
             maxid_data[batch_id*num_grids*feature_size+j*feature_size+c] = i;
           }
