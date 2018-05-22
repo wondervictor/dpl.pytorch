@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "train.py", line 9, in <module>
+    import torch
+  File "/workspace2/cth/anaconda/anaconda2/lib/python2.7/site-packages/torch/__init__.py", line 56, in <module>
+    from torch._C import *
+KeyboardInterrupt

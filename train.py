@@ -17,7 +17,8 @@ from torch.autograd import Variable
 import utils
 import models.dpl as model
 import models.layers as layers
-import dataset.dataset as dataset
+from datasets import pascal_voc
+from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=8, help='training batch size')
@@ -33,6 +34,7 @@ parser.add_argument('--save_interval', type=int, default=5, help='save model int
 parser.add_argument('--name', type=str, required=True, help='expriment name')
 parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
+parser.add_argument('--proposal', type=str, default='selective_search', help='proposal type:[selective_search, dense_box]')
 
 
 opt = parser.parse_args()
@@ -56,26 +58,38 @@ if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 
-train_dataset = dataset.PASCAL(data_path=opt.data_dir, train=True)
-test_dataset = dataset.PASCAL(data_path=opt.data_dir, train=False)
+train_dataset = pascal_voc.PASCALVOC(
+    img_size=opt.img_size,
+    data_dir=opt.data_dir,
+    imageset='train',
+    roi_path='./data/',
+    roi_type=opt.proposal,
+    devkit='./devkit/'
+)
 
-def adjust_lr(_optimizer, _epoch):
-    lr = opt.lr * 0.9 * (_epoch/5)
-    for param_group in _optimizer.param_groups:
-        param_group['lr'] = lr
-
+val_dataset = pascal_voc.PASCALVOC(
+    img_size=opt.img_size,
+    data_dir=opt.data_dir,
+    imageset='val',
+    roi_path='./data/',
+    roi_type=opt.proposal,
+    devkit='./devkit/'
+)
 
 train_loader = torch.utils.data.DataLoader(
     dataset=train_dataset,
     batch_size=opt.batch_size,
-    shuffle=True
+    shuffle=True,
+    collate_fn=data_utils.collate_fn
 )
 
 test_loader = torch.utils.data.DataLoader(
-    dataset=test_dataset,
-    batch_size=opt.batch_size,
-    shuffle=True
+    dataset=val_dataset,
+    batch_size=1,
+    shuffle=False,
+    collate_fn=data_utils.collate_fn
 )
+
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -89,7 +103,14 @@ def weights_init(m):
         m.bias.data.uniform_(0, 0.5)
 
 
-dpl = model.DPL(batch_size=opt.batch_size, use_cuda=opt.cuda)
+def adjust_lr(_optimizer, _epoch):
+    lr = opt.lr * 0.5 * (_epoch/5)
+    for param_group in _optimizer.param_groups:
+        lr = param_group['lr']
+        param_group['lr'] = lr * 0.5
+
+
+dpl = model.DPL(use_cuda=opt.cuda)
 dpl.apply(weights_init)
 dpl.train()
 
@@ -116,7 +137,7 @@ param_dir = expr_dir+'param/'
 if not os.path.exists(param_dir):
     os.mkdir(param_dir)
 
-optimizer = optim.Adam([{"params": dpl.fcs.parameters()},{"params": dpl.out.parameters()}], lr=opt.lr)
+optimizer = optim.Adam(params=dpl.head_network.parameters(), lr=1e-4, weight_decay=1e-4)
 
 averager = utils.Averager()
 
@@ -125,32 +146,52 @@ def load_data(v, data):
     v.data.resize_(data.size()).copy_(data)
 
 
-def test(net, criterion):
+def test(net, criterion, output_dir):
+    # output_dir = 'devkit/results/VOC2012/Main/comp2_cls_val_xxxx.txt'
     net.eval()
     test_iter = iter(test_loader)
     test_averager = utils.Averager()
-    pass
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    i = 0
+    while i < len(train_loader):
+        img, lbl, box = train_iter.next()
+        load_data(images, img)
+        load_data(labels, lbl)
+        boxes = Variable(torch.FloatTensor(box)).cuda()
+        output = net(images, boxes).squeeze(0)
+        loss = criterion(output, labels)
+        test_averager.add(loss)
+
+        for m in xrange(opt.num_class):
+            cls_file = os.path.join(output_dir, 'cls_val_' + val_dataset.classes[m] + '.txt')
+            with open(cls_file, 'a') as f:
+                f.write(val_dataset.image_index[i] + ' ' + str(output[m]) + '\n')
+
+            print 'im_cls: {:d}/{:d}: {}'.format(i + 1, len(train_loader), val_dataset.image_index[i])
+
+    val_dataset.do_python_eval(output_dir)
 
 
 def train_batch(net, data, criterion, optimizer):
 
-    img, lbl, box = data
-
+    img, lbl, box, shapes = data
     load_data(images, img)
     load_data(labels, lbl)
-    boxes = []
-    for n in range(len(box)):
-        boxes += [[n]+b.tolist() for b in box[n]]
-    boxes = Variable(torch.FloatTensor(boxes)).cuda()
+    boxes = Variable(torch.FloatTensor(box)).cuda()
+    shapes = Variable(torch.FloatTensor(shapes)).cuda()
+    cls_1, cls_2 = net(images, shapes, boxes)
 
-    output = net(images, boxes)
-    loss = criterion(output, labels)
-
+    loss1 = criterion(cls_1, labels)
+    loss2 = criterion(cls_2, labels)
+    loss = loss1 + loss2
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
 
     return loss
+
 
 logger.log('starting to train')
 iter_steps = 0
