@@ -5,6 +5,7 @@ Description: Deep Patch Learning Model
 Author: wondervictor
 """
 
+import math
 import torch
 import torch.nn as nn
 import numpy as np
@@ -33,6 +34,12 @@ class PatchHeadNetwork(nn.Module):
         self.cls_score2 = nn.Linear(4096, num_classes)
         self.patch_pooling = layers.MaxPatchPooling(use_cuda)
         self.spm_pooling = layers.SPMMaxPooling()
+
+        for m in self.modules():
+            print m
+            if isinstance(m, nn.Linear):
+                m.weight.data.normal_(0.0, 0.01)
+                m.bias.data.uniform_(-0.5, 0.5)
 
     def forward(self, features, shapes, rois):
         # N denotes the num_rois, B denotes the batchsize
@@ -70,13 +77,17 @@ class PatchHeadNetwork(nn.Module):
 
 class DPL(nn.Module):
 
-    def __init__(self, use_cuda, num_classes=20, base='vgg', use_relation=False):
+    def __init__(self, use_cuda, num_classes=20, enable_base_grad=False, base='vgg', pretrained=True, use_relation=False):
         super(DPL, self).__init__()
         if base == 'vgg':
             self.cnn = basenet.VGG16()
-        else:
-            self.cnn = basenet.VGG16()
-
+        elif base == 'resnet50':
+            self.cnn = basenet.ResNet50(pretrained=True)
+        elif base == 'resnet34':
+            self.cnn = basenet.ResNet34(pretrained=True)
+        if not enable_base_grad:
+            for param in self.cnn.parameters():
+                param.require_grad = False
         self.use_cuda = use_cuda
         self.head_network = PatchHeadNetwork(use_cuda=use_cuda, num_classes=num_classes, use_relation=use_relation)
 
