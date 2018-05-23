@@ -43,7 +43,7 @@ parser.add_argument('--num_class', type=int, default=20, help='label classes')
 parser.add_argument('--proposal', type=str, default='selective_search', help='proposal:[selective_search, dense_box]')
 parser.add_argument('--resume', action='store_true', help='use saved parameters to resume')
 parser.add_argument('--optimize_all', action='store_true', help='Optimize all parameters including VGG/ResNet')
-
+parser.add_argument('--param', type=str, default='', help='Initialize with params')
 opt = parser.parse_args()
 print(opt)
 
@@ -136,9 +136,12 @@ if opt.cuda:
     images = images.cuda()
     labels = labels.cuda()
 
-if opt.resume and os.path.exists("{}_result.pth".format(param_dir)):
-    dpl.load_state_dict(torch.load("{}_result.pth".format(param_dir)))
+if opt.resume and os.path.exists("{}resume.pth".format(param_dir)):
+    dpl.load_state_dict(torch.load("{}resume.pth".format(param_dir)))
     print("Load params from resume data")
+elif len(opt.param) > 0:
+    dpl.load_state_dict(torch.load(opt.param))
+    print("Load params from param: %s" % opt.param)
 print(dpl)
 print("---------- DPL Model Init Finished -----------")
 
@@ -215,6 +218,6 @@ for epoch in xrange(opt.epoch):
         pass
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
-    torch.save(dpl.state_dict(), "{}_result.pth".format(param_dir))
+    torch.save(dpl.state_dict(), "{}resume.pth".format(param_dir))
 
 
