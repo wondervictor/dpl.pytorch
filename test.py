@@ -21,7 +21,7 @@ from datasets import pascal_voc
 from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--base model', type=str, default='vgg', help='base cnn model:[vgg, resnet, densenet]')
+parser.add_argument('--basemodel', type=str, default='vgg', help='base cnn model:[vgg, resnet34, resnet50]')
 parser.add_argument('--cuda', action='store_true', help='use GPU to train')
 parser.add_argument('--dataset', type=str, default='VOC2012', help='training dataset:[VOC2012, VOC2007, COCO]')
 parser.add_argument('--data_dir', type=str, required=True, help='parameters storage')
@@ -29,7 +29,8 @@ parser.add_argument('--name', type=str, required=True, help='expriment name')
 parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
 parser.add_argument('--param', type=str, required=True, help='model params path')
-parser.add_argument('--proposal', type=str, default='selective_search', help='proposal type:[selective_search, dense_box]')
+parser.add_argument('--proposal', type=str, default='selective_search',
+                    help='proposal type:[selective_search, dense_box]')
 
 
 opt = parser.parse_args()
@@ -59,8 +60,10 @@ test_loader = torch.utils.data.DataLoader(
     collate_fn=data_utils.collate_fn
 )
 
-batch_size=1
-dpl = model.DPL(use_cuda=opt.cuda)
+batch_size = 1
+dpl = model.DPL(use_cuda=opt.cuda, base=opt.basemodel, num_classes=opt.num_class)
+dpl.load_state_dict(torch.load(opt.param))
+dpl.eval()
 
 criterion = layers.MultiSigmoidCrossEntropyLoss()
 
@@ -81,7 +84,6 @@ if opt.cuda:
     images = images.cuda()
     labels = labels.cuda()
 
-dpl.load_state_dict(torch.load(opt.param))
 
 averager = utils.Averager()
 
@@ -92,7 +94,6 @@ def load_data(v, data):
 
 def test(net, criterion, output_dir):
     # output_dir = 'devkit/results/VOC2012/Main/comp2_cls_val_xxxx.txt'
-    net.eval()
     test_iter = iter(test_loader)
     test_averager = utils.Averager()
     if not os.path.exists(output_dir):
@@ -108,8 +109,7 @@ def test(net, criterion, output_dir):
         loss1 = criterion(cls_score1, labels)
         loss2 = criterion(cls_score2, labels)
         loss = loss1 + loss2
-        test_averager.add(loss.data[0])
-        # output = loss.cpu().squeeze(0).data.numpy()
+        test_averager.add(loss)
         cls_score = cls_score1 + cls_score2
         cls_score = cls_score.cpu().squeeze(0).data.numpy()
         for m in xrange(opt.num_class):
@@ -120,7 +120,6 @@ def test(net, criterion, output_dir):
         print 'im_cls: {:d}/{:d}: {}'.format(i + 1, len(test_loader), val_dataset.image_index[i])
         i = i + 1
     print("Avg Loss: {}".format(test_averager.val()))
-    # val_dataset.do_python_eval(output_dir)
 
 
 if __name__ == '__main__':
