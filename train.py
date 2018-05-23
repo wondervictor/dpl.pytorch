@@ -10,6 +10,7 @@ import torch
 import random
 import argparse
 import numpy as np
+import torch.cuda
 import torch.utils.data
 import torch.optim as optim
 from torch.autograd import Variable
@@ -21,8 +22,13 @@ from datasets import pascal_voc
 from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
+<<<<<<< HEAD
 parser.add_argument('--batch_size', type=int, default=8, help='training batch size')
 parser.add_argument('--base model', type=str, default='vgg', help='base cnn model:[vgg, resnet, densenet]')
+=======
+parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
+parser.add_argument('--basemodel', type=str, default='vgg', help='base cnn model:[vgg, resnet34, resnet50]')
+>>>>>>> 1a4dde36ad009f8d1b52f33992dce77ffe32ce94
 parser.add_argument('--cuda', action='store_true', help='use GPU to train')
 parser.add_argument('--dataset', type=str, default='VOC2012', help='training dataset:[VOC2012, VOC2007, COCO]')
 parser.add_argument('--epoch', type=int, default=100, help='training epoches')
@@ -36,7 +42,7 @@ parser.add_argument('--img_size', type=int, default=224, help='image size')
 parser.add_argument('--num_class', type=int, default=20, help='label classes')
 parser.add_argument('--proposal', type=str, default='selective_search', help='proposal:[selective_search, dense_box]')
 parser.add_argument('--resume', action='store_true', help='use saved parameters to resume')
-
+parser.add_argument('--optimize_all', action='store_true', help='Optimize all parameters including VGG/ResNet')
 
 opt = parser.parse_args()
 print(opt)
@@ -57,7 +63,6 @@ if not os.path.exists(expr_dir):
 
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-
 
 train_dataset = pascal_voc.PASCALVOC(
     img_size=opt.img_size,
@@ -94,18 +99,6 @@ test_loader = torch.utils.data.DataLoader(
 )
 
 
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
-    elif classname.find('Linear') != -1:
-        m.weight.data.normal_(0.0, 0.01)
-        m.bias.data.uniform_(0, 0.5)
-
-
 def adjust_lr(_optimizer, _epoch):
     lr = opt.lr * 0.5 * (_epoch/5)
     for param_group in _optimizer.param_groups:
@@ -124,10 +117,15 @@ if not os.path.exists(param_dir):
 
 criterion = layers.MultiSigmoidCrossEntropyLoss()
 
-dpl = model.DPL(use_cuda=opt.cuda)
-dpl = torch.nn.DataParallel(dpl, device_ids=range(torch.cuda.device_count()))
+if opt.optimize_all:
+    dpl = model.DPL(use_cuda=opt.cuda, enable_base_grad=True, base=opt.basemodel, num_classes=opt.num_class)
+    net_params = dpl.parameters()
+else:
+    dpl = model.DPL(use_cuda=opt.cuda, enable_base_grad=False, base=opt.basemodel, num_classes=opt.num_class)
+    net_params = dpl.head_network.parameters()
 
-dpl.apply(weights_init)
+optimizer = optim.Adam(params=net_params, lr=1e-4, weight_decay=1e-4)
+
 dpl.train()
 logger = utils.Logger(stdio=True, log_file=log_dir+"training.log")
 images = Variable(torch.FloatTensor(opt.batch_size, 3, opt.img_size, opt.img_size))
@@ -144,12 +142,7 @@ if opt.resume and os.path.exists("{}_result.pth".format(param_dir)):
 print(dpl)
 print("---------- DPL Model Init Finished -----------")
 
-
-optimizer = optim.Adam(params=dpl.head_network.parameters(), lr=2e-4, weight_decay=1e-4)
-
 averager = utils.Averager()
-
-
 def load_data(v, data):
     v.data.resize_(data.size()).copy_(data)
 
