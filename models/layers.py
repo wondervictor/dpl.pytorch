@@ -176,9 +176,11 @@ class MaxPatchPooling(nn.Module):
         # patches: torch.FloatTensor, NxC
         # patch_ids: numpy array, Nx1
         num_patch, num_features = patches.size()
-        output = Variable(torch.zeros((batch_size, num_features)))
-        if self.cuda:
-            output = output.cuda()
+        output = torch.zeros((batch_size, num_features)).cuda() 
+        output = Variable(output)
+        # output = patches.new((batch_size, num_features)).zero_() # Variable(torch.zeros((batch_size, num_features))).cuda(0)
+        #if self.cuda:
+        #    output = output.cuda()
         for i in xrange(batch_size):
             output[i] = torch.max(patches[np.where(patch_ids == i), :].squeeze(0), dim=0)[0]
         return output

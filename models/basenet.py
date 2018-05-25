@@ -166,12 +166,12 @@ class ResNet50(nn.Module):
         super(ResNet50, self).__init__()
         self.features = ResNet(Bottleneck, [3, 4, 6, 3])
         if pretrained:
-            self.features.load_state_dict(
-                model_zoo.load_url('https://download.pytorch.org/models/resnet50-19c8e357.pth'))
-
+            state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet50-19c8e357.pth')
+            del state_dict['fc.weight']
+            del state_dict['fc.bias']
+            self.features.load_state_dict(state_dict)
     def forward(self, x):
         x = self.features(x)
-        print(x.size())
         return x
 
 
@@ -181,10 +181,11 @@ class ResNet34(nn.Module):
         super(ResNet34, self).__init__()
         self.features = ResNet(BasicBlock, [3, 4, 6, 3])
         if pretrained:
-            self.features.load_state_dict(
-                model_zoo.load_url('https://download.pytorch.org/models/resnet34-333f7ec4.pth'))
+            state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet34-333f7ec4.pth')
+            del state_dict['fc.weight']
+            del state_dict['fc.bias']
+            self.features.load_state_dict(state_dict)
 
     def forward(self, x):
         x = self.features(x)
-        print(x.size())
         return x

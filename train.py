@@ -22,13 +22,8 @@ from datasets import pascal_voc
 from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
-<<<<<<< HEAD
-parser.add_argument('--batch_size', type=int, default=8, help='training batch size')
-parser.add_argument('--base model', type=str, default='vgg', help='base cnn model:[vgg, resnet, densenet]')
-=======
 parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
 parser.add_argument('--basemodel', type=str, default='vgg', help='base cnn model:[vgg, resnet34, resnet50]')
->>>>>>> 1a4dde36ad009f8d1b52f33992dce77ffe32ce94
 parser.add_argument('--cuda', action='store_true', help='use GPU to train')
 parser.add_argument('--dataset', type=str, default='VOC2012', help='training dataset:[VOC2012, VOC2007, COCO]')
 parser.add_argument('--epoch', type=int, default=100, help='training epoches')
@@ -67,7 +62,7 @@ if torch.cuda.is_available() and not opt.cuda:
 train_dataset = pascal_voc.PASCALVOC(
     img_size=opt.img_size,
     data_dir=opt.data_dir,
-    imageset='train',
+    imageset='trainval',
     roi_path='./data/',
     roi_type=opt.proposal,
     devkit='./devkit/'
@@ -124,7 +119,8 @@ else:
     dpl = model.DPL(use_cuda=opt.cuda, enable_base_grad=False, base=opt.basemodel, num_classes=opt.num_class)
     net_params = dpl.head_network.parameters()
 
-optimizer = optim.Adam(params=net_params, lr=1e-4, weight_decay=1e-4)
+print net_params
+optimizer = optim.Adam(params=net_params, lr=opt.lr, weight_decay=1e-4)
 
 dpl.train()
 logger = utils.Logger(stdio=True, log_file=log_dir+"training.log")

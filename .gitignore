@@ -112,3 +112,4 @@ output
 .vscode
 .idea
 data
+*.out

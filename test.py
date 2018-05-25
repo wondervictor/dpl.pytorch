@@ -104,11 +104,12 @@ def test(net, criterion, output_dir):
         load_data(images, img)
         load_data(labels, lbl)
         boxes = Variable(torch.FloatTensor(box)).cuda()
+        shapes = Variable(torch.FloatTensor(shapes)).cuda()
         cls_score1, cls_score2 = net(images, shapes, boxes)
         loss1 = criterion(cls_score1, labels)
         loss2 = criterion(cls_score2, labels)
         loss = loss1 + loss2
-        test_averager.add(loss.data[0])
+        test_averager.add(loss)
         # output = loss.cpu().squeeze(0).data.numpy()
         cls_score = cls_score1 + cls_score2
         cls_score = cls_score.cpu().squeeze(0).data.numpy()
