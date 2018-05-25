@@ -62,7 +62,7 @@ if torch.cuda.is_available() and not opt.cuda:
 train_dataset = pascal_voc.PASCALVOC(
     img_size=opt.img_size,
     data_dir=opt.data_dir,
-    imageset='train',
+    imageset='trainval',
     roi_path='./data/',
     roi_type=opt.proposal,
     devkit='./devkit/'
@@ -119,7 +119,8 @@ else:
     dpl = model.DPL(use_cuda=opt.cuda, enable_base_grad=False, base=opt.basemodel, num_classes=opt.num_class)
     net_params = dpl.head_network.parameters()
 
-optimizer = optim.Adam(params=net_params, lr=1e-4, weight_decay=1e-4)
+print net_params
+optimizer = optim.Adam(params=net_params, lr=opt.lr, weight_decay=1e-4)
 
 dpl.train()
 logger = utils.Logger(stdio=True, log_file=log_dir+"training.log")
@@ -139,7 +140,6 @@ elif len(opt.param) > 0:
     print("Load params from param: %s" % opt.param)
 print(dpl)
 print("---------- DPL Model Init Finished -----------")
-
 
 averager = utils.Averager()
 
@@ -217,7 +217,5 @@ for epoch in xrange(opt.epoch):
     if (epoch+1) % opt.save_interval == 0:
         torch.save(dpl.state_dict(), os.path.join(param_dir, 'epoch_{}.pth'.format(epoch)))
     torch.save(dpl.state_dict(), os.path.join(param_dir, 'resume.pth'))
-
-
 
 

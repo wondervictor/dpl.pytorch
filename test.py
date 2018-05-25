@@ -79,12 +79,12 @@ def test(net, output_dir):
         img, box, shapes = test_iter.next()
         load_data(images, img)
         boxes = Variable(torch.FloatTensor(box)).cuda()
-        shapes = Variable(torch.FloatTensor(shapes))
+        shapes = Variable(torch.FloatTensor(shapes)).cuda()
         cls_score1, cls_score2 = net(images, shapes, boxes)
         cls_score = cls_score1 + cls_score2
         cls_score = cls_score.cpu().squeeze(0).data.numpy()
         for m in xrange(opt.num_class):
-            cls_file = os.path.join(output_dir, 'comp2_cls_{}_'.format(opt.imageset) + val_dataset.classes[m] + '.txt')
+            cls_file = os.path.join(output_dir, 'comp2_cls_test_' + val_dataset.classes[m] + '.txt')
             with open(cls_file, 'a') as f:
                 f.write(val_dataset.image_index[i] + ' ' + str(cls_score[m]) + '\n')
 

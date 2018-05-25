@@ -21,7 +21,6 @@ from datasets import pascal_voc
 from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--imageset', type=str, default='val', help='image split: [val, test]')
 parser.add_argument('--basemodel', type=str, default='vgg', help='base cnn model:[vgg, resnet34, resnet50]')
 parser.add_argument('--cuda', action='store_true', help='use GPU to train')
 parser.add_argument('--dataset', type=str, default='VOC2012', help='training dataset:[VOC2012, VOC2007, COCO]')
@@ -47,7 +46,7 @@ if torch.cuda.is_available() and not opt.cuda:
 val_dataset = pascal_voc.PASCALVOC(
     img_size=opt.img_size,
     data_dir=opt.data_dir,
-    imageset=opt.imageset,
+    imageset='val',
     roi_path='./data/',
     roi_type=opt.proposal,
     devkit='./devkit/'
@@ -114,7 +113,7 @@ def test(net, criterion, output_dir):
         cls_score = cls_score1 + cls_score2
         cls_score = cls_score.cpu().squeeze(0).data.numpy()
         for m in xrange(opt.num_class):
-            cls_file = os.path.join(output_dir, 'comp2_cls_{}_'.format(opt.imageset) + val_dataset.classes[m] + '.txt')
+            cls_file = os.path.join(output_dir, 'comp2_cls_{}_'.format('val') + val_dataset.classes[m] + '.txt')
             with open(cls_file, 'a') as f:
                 f.write(val_dataset.image_index[i] + ' ' + str(cls_score[m]) + '\n')
 

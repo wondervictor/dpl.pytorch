@@ -36,7 +36,6 @@ class PatchHeadNetwork(nn.Module):
         self.spm_pooling = layers.SPMMaxPooling()
 
         for m in self.modules():
-            print m
             if isinstance(m, nn.Linear):
                 m.weight.data.normal_(0.0, 0.01)
                 m.bias.data.uniform_(-0.5, 0.5)
@@ -86,6 +85,7 @@ class DPL(nn.Module):
         elif base == 'resnet34':
             self.cnn = basenet.ResNet34(pretrained=True)
         if not enable_base_grad:
+            print("Not Enable Base Model Gradient")
             for param in self.cnn.parameters():
                 param.require_grad = False
         self.use_cuda = use_cuda
