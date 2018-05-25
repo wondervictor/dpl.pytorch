@@ -213,7 +213,7 @@ for epoch in xrange(opt.epoch):
     if (epoch+1) % opt.val_interval == 0:
         pass
     if (epoch+1) % opt.save_interval == 0:
-        torch.save(dpl.state_dict(), "{}epoch_{}.pth".format(param_dir, epoch))
-    torch.save(dpl.state_dict(), "{}resume.pth".format(param_dir))
+        torch.save(dpl.state_dict(), os.path.join(param_dir, 'epoch_{}.pth'.format(epoch)))
+    torch.save(dpl.state_dict(), os.path.join(param_dir, 'resume.pth'))
 
 
