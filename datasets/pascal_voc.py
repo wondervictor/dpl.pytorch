@@ -48,8 +48,9 @@ class PASCALVOC(Dataset):
         self.image_index = self._load_imageset_index()
         self.num_classes = len(self.classes)
         self._devkit_path = devkit if devkit is not None else 'VOCdevkit'
-        self._anotations = dict([(x, self._load_anotation_from_index(x)) for x in self.image_index])
-        self._labels = dict([(x, self._load_class_label_from_index(x)) for x in self.image_index])
+        if imageset != 'test':
+            self._anotations = dict([(x, self._load_anotation_from_index(x)) for x in self.image_index])
+            self._labels = dict([(x, self._load_class_label_from_index(x)) for x in self.image_index])
         self.roi_path = roi_path
         self.roi_type = roi_type
         self.toTensor = transforms.ToTensor()
@@ -265,7 +266,6 @@ class PASCALVOC(Dataset):
         img = Image.open(img_path)
 
         roi = self.rois[img_name]
-        label = self._labels[img_name]['labels']
         h, w = img.size
         max_size = max(h, w)
         ratio = float(self.img_size) / float(max_size)
@@ -279,7 +279,11 @@ class PASCALVOC(Dataset):
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
         wrap_img[:, 0:w, 0:h] = img
-        return wrap_img, label, roi, np.array([w, h], dtype=np.float32)
+        if self._imageset == 'test':
+            return wrap_img, roi, np.array([w, h], dtype=np.float32)
+        else:
+            label = self._labels[img_name]['labels']
+            return wrap_img, label, roi, np.array([w, h], dtype=np.float32)
 
 
 

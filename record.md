@@ -17,7 +17,8 @@
 
 |  ID |  Epoch  |  mAP |
 |-----|---------|------|
-|vgg_pretrained_5_epoch_20180523|5|xx|
+|vgg_pretrained_1_epoch_20180523|1|0.742444|
+|vgg_pretrained_7_epoch_20180523|7|0.8023|
 
 
 * RESNET50_VOC: 使用ResNet50 pretrained model
