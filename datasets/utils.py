@@ -22,3 +22,14 @@ def collate_fn(batch):
     return imgs, lbl, boxes, shapes
 
 
+def test_collate_fn(batch):
+    transposed = zip(*batch)
+    imgs = default_collate(transposed[0])
+    boxes = []
+    box = transposed[1]
+    for i in xrange(len(transposed[1])):
+        boxes += [[i] + b.tolist() for b in box[i]]
+    boxes = np.array(boxes)
+    shapes = default_collate(transposed[2])
+
+    return imgs, boxes, shapes
