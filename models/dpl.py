@@ -70,8 +70,8 @@ class PatchHeadNetwork(nn.Module):
         cls_score1 = self.cls_score1(spm_features)
         cls_score2_features = self.cls_score2(patch_features)
         cls_score2 = self.patch_pooling(cls_score2_features, batch_size, output_batch_id)
-
-        return cls_score1, cls_score2
+        det_scores = cls_score2_features
+        return cls_score1, cls_score2, det_scores
 
 
 class DPL(nn.Module):
@@ -93,6 +93,6 @@ class DPL(nn.Module):
 
     def forward(self, images, shapes, rois):
         features = self.cnn(images)
-        cls_score1, cls_score2 = self.head_network(features, shapes, rois)
-        return cls_score1, cls_score2
+        cls_score1, cls_score2, det_scores = self.head_network(features, shapes, rois)
+        return cls_score1, cls_score2, det_scores
 

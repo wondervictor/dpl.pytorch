@@ -80,7 +80,7 @@ def test(net, output_dir):
         load_data(images, img)
         boxes = Variable(torch.FloatTensor(box)).cuda()
         shapes = Variable(torch.FloatTensor(shapes)).cuda()
-        cls_score1, cls_score2 = net(images, shapes, boxes)
+        cls_score1, cls_score2, _ = net(images, shapes, boxes)
         cls_score = cls_score1 + cls_score2
         cls_score = cls_score.cpu().squeeze(0).data.numpy()
         for m in xrange(opt.num_class):

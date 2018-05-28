@@ -183,7 +183,7 @@ def train_batch(net, data, criterion, optimizer):
     load_data(labels, lbl)
     boxes = Variable(torch.FloatTensor(box)).cuda()
     shapes = Variable(torch.FloatTensor(shapes)).cuda()
-    cls_1, cls_2 = net(images, shapes, boxes)
+    cls_1, cls_2, _ = net(images, shapes, boxes)
 
     loss1 = criterion(cls_1, labels)
     loss2 = criterion(cls_2, labels)
