@@ -55,8 +55,12 @@ class PASCALVOC(Dataset):
         self.roi_type = roi_type
         self.toTensor = transforms.ToTensor()
         self.resize = transforms.Resize(img_size)
-
         self._load_rois(roi_type=self.roi_type, roi_dir=self.roi_path)
+        self.add_flipped()
+
+    def add_flipped(self):
+        flipped = [x + '_flipped' for x in self.image_index]
+        self.image_index += flipped
 
     def __len__(self):
         return len(self.image_index)
@@ -259,26 +263,56 @@ class PASCALVOC(Dataset):
         elif roi_type == 'selective_search':
             self.rois = self._load_selective_search(roi_dir)
 
+    # def append_flipped_images(self):
+    #     num_images = self.num_images
+    #     widths = [Image.open(self.image_path_at(i)).size[0]
+    #               for i in xrange(num_images)]
+    #     for i in xrange(num_images):
+    #         boxes = self.roidb[i]['boxes'].copy()
+    #         oldx1 = boxes[:, 0].copy()
+    #         oldx2 = boxes[:, 2].copy()
+    #         boxes[:, 0] = widths[i] - oldx2 - 1
+    #         boxes[:, 2] = widths[i] - oldx1 - 1
+    #         assert (boxes[:, 2] >= boxes[:, 0]).all()
+    #         entry = {'boxes' : boxes,
+    #                  'labels' : self.roidb[i]['labels'],
+    #                  'flipped' : True}
+    #         self.roidb.append(entry)
+    #     self._image_index = self._image_index * 2
+
     def __getitem__(self, idx):
 
         img_name = self.image_index[idx]
-        img_path = self.image_path_at(idx)
+        flipped = False
+        if img_name.find('_flipped') != -1:
+            img_name = img_name.replace('_flipped', '')
+            flipped = True
+        img_path = self.image_path_from_index(img_name)
         img = Image.open(img_path)
 
         roi = self.rois[img_name]
-        h, w = img.size
+        w, h = img.size
         max_size = max(h, w)
         ratio = float(self.img_size) / float(max_size)
         w = int(w*ratio)
         h = int(h*ratio)
-        img = img.resize((h, w))
-        img = self.toTensor(img)
+        img = img.resize((w, h))
         roi = roi * ratio
+        img = np.array(img)
+
+        if flipped:
+            oldx1 = roi[:, 0].copy()
+            oldx2 = roi[:, 2].copy()
+            roi[:, 0] = w - oldx2 - 1
+            roi[:, 2] = w - oldx1 - 1
+            img = img[:, ::-1, :]
+        img = self.toTensor(img)
+
         if len(roi) > 2000:
             roi = random.sample(roi, 2000)
 
         wrap_img = torch.zeros((3, self.img_size, self.img_size))
-        wrap_img[:, 0:w, 0:h] = img
+        wrap_img[:, 0:h, 0:w] = img
         if self._imageset == 'test':
             return wrap_img, roi, np.array([w, h], dtype=np.float32)
         else:
