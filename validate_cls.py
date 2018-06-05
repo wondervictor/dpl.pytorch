@@ -64,6 +64,7 @@ batch_size = 1
 dpl = model.DPL(use_cuda=opt.cuda, base=opt.basemodel, num_classes=opt.num_class)
 dpl.load_state_dict(torch.load(opt.param))
 dpl.eval()
+dpl.freeze_bn()
 
 criterion = layers.MultiSigmoidCrossEntropyLoss()
 
@@ -105,6 +106,7 @@ def test(net, criterion, output_dir):
         load_data(images, img)
         load_data(labels, lbl)
         boxes = Variable(torch.FloatTensor(box)).cuda()
+        shapes = Variable(torch.FloatTensor(shapes)).cuda()
         cls_score1, cls_score2 = net(images, shapes, boxes)
         loss1 = criterion(cls_score1, labels)
         loss2 = criterion(cls_score2, labels)

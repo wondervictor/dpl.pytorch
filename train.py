@@ -11,6 +11,7 @@ import random
 import argparse
 import numpy as np
 import torch.cuda
+import torch.nn as nn
 import torch.utils.data
 import torch.optim as optim
 from torch.autograd import Variable
@@ -22,6 +23,7 @@ from datasets import pascal_voc
 from datasets import utils as data_utils
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--imageset', type=str, default='train', help='training image set [train, trainval]')
 parser.add_argument('--batch_size', type=int, default=2, help='training batch size')
 parser.add_argument('--basemodel', type=str, default='vgg', help='base cnn model:[vgg, resnet34, resnet50]')
 parser.add_argument('--cuda', action='store_true', help='use GPU to train')
@@ -43,7 +45,7 @@ opt = parser.parse_args()
 print(opt)
 
 # fix the random seed
-random_seed = 2781
+random_seed = np.random.randint(0, 1000000)
 random.seed(random_seed)
 np.random.seed(random_seed)
 torch.manual_seed(random_seed)
@@ -62,7 +64,7 @@ if torch.cuda.is_available() and not opt.cuda:
 train_dataset = pascal_voc.PASCALVOC(
     img_size=opt.img_size,
     data_dir=opt.data_dir,
-    imageset='trainval',
+    imageset=opt.imageset,
     roi_path='./data/',
     roi_type=opt.proposal,
     devkit='./devkit/'
@@ -119,10 +121,10 @@ else:
     dpl = model.DPL(use_cuda=opt.cuda, enable_base_grad=False, base=opt.basemodel, num_classes=opt.num_class)
     net_params = dpl.head_network.parameters()
 
-print net_params
 optimizer = optim.Adam(params=net_params, lr=opt.lr, weight_decay=1e-4)
 
 dpl.train()
+# dpl = nn.DataParallel(dpl, device_ids=(0, 1))
 logger = utils.Logger(stdio=True, log_file=log_dir+"training.log")
 images = Variable(torch.FloatTensor(opt.batch_size, 3, opt.img_size, opt.img_size))
 labels = Variable(torch.FloatTensor(opt.batch_size, opt.num_class))
@@ -203,6 +205,7 @@ for epoch in xrange(opt.epoch):
     while i < len(train_loader):
 
         dpl.train()
+        dpl.freeze_bn()
         data = train_iter.next()
         _loss = train_batch(dpl, data, criterion, optimizer=optimizer)
         averager.add(_loss)
@@ -214,8 +217,8 @@ for epoch in xrange(opt.epoch):
     averager.reset()
     if (epoch+1) % opt.val_interval == 0:
         pass
-    if (epoch+1) % opt.save_interval == 0:
-        torch.save(dpl.state_dict(), os.path.join(param_dir, 'epoch_{}.pth'.format(epoch)))
+    # if (epoch+1) % opt.save_interval == 0:
+    torch.save(dpl.state_dict(), os.path.join(param_dir, 'epoch_{}.pth'.format(epoch)))
     torch.save(dpl.state_dict(), os.path.join(param_dir, 'resume.pth'))
 
 

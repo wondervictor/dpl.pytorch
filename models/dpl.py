@@ -91,6 +91,11 @@ class DPL(nn.Module):
         self.use_cuda = use_cuda
         self.head_network = PatchHeadNetwork(use_cuda=use_cuda, num_classes=num_classes, use_relation=use_relation)
 
+    def freeze_bn(self):
+        for layer in self.cnn.modules():
+            if isinstance(layer, nn.BatchNorm2d):
+                layer.eval()
+
     def forward(self, images, shapes, rois):
         features = self.cnn(images)
         cls_score1, cls_score2, det_scores = self.head_network(features, shapes, rois)
