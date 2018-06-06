@@ -177,7 +177,6 @@ def test(net, criterion, output_dir):
 
     val_dataset.do_python_eval(output_dir)
 
-
 def train_batch(net, data, criterion, optimizer):
 
     img, lbl, box, shapes = data
