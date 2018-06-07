@@ -26,7 +26,7 @@ MATLAB = ''
 
 class PASCALVOC(Dataset):
 
-    def __init__(self, imageset, data_dir, img_size, roi_path, roi_type='dense_box', devkit=None):
+    def __init__(self, imageset, data_dir, img_size, roi_path, test_mode=False, flip=True, roi_type='dense_box', devkit=None):
         super(PASCALVOC, self).__init__()
 
         self._imageset = imageset  # 'trainval', 'val'
@@ -56,7 +56,9 @@ class PASCALVOC(Dataset):
         self.toTensor = transforms.ToTensor()
         self.resize = transforms.Resize(img_size)
         self._load_rois(roi_type=self.roi_type, roi_dir=self.roi_path)
-        self.add_flipped()
+        if flip:
+            self.add_flipped()
+        self.test_mode = test_mode
 
     def add_flipped(self):
         flipped = [x + '_flipped' for x in self.image_index]
@@ -298,26 +300,28 @@ class PASCALVOC(Dataset):
         h = int(h*ratio)
         img = img.resize((w, h))
         roi = roi * ratio
-        img = np.array(img)
+        img = np.array(img)  # H x W x C
 
         if flipped:
             oldx1 = roi[:, 0].copy()
             oldx2 = roi[:, 2].copy()
             roi[:, 0] = w - oldx2 - 1
             roi[:, 2] = w - oldx1 - 1
-            img = img[:, ::-1, :]
+            img = img[:, ::-1, :].copy()
         img = self.toTensor(img)
 
         if len(roi) > 2000:
             roi = random.sample(roi, 2000)
 
-        wrap_img = torch.zeros((3, self.img_size, self.img_size))
-        wrap_img[:, 0:h, 0:w] = img
+        if not self.test_mode:
+            wrap_img = torch.zeros((3, self.img_size, self.img_size))
+            wrap_img[:, 0:h, 0:w] = img
+            img = wrap_img
         if self._imageset == 'test':
-            return wrap_img, roi, np.array([w, h], dtype=np.float32)
+            return img, roi, np.array([w, h], dtype=np.float32)
         else:
             label = self._labels[img_name]['labels']
-            return wrap_img, label, roi, np.array([w, h], dtype=np.float32)
+            return img, label, roi, np.array([w, h], dtype=np.float32)
 
 
 

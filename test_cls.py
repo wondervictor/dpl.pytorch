@@ -39,7 +39,9 @@ val_dataset = pascal_voc.PASCALVOC(
     imageset='test',
     roi_path='./data/',
     roi_type=opt.proposal,
-    devkit='./devkit/'
+    devkit='./devkit/',
+    test_mode=True,
+    flip=False
 )
 
 

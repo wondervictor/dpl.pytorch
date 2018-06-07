@@ -49,7 +49,9 @@ val_dataset = pascal_voc.PASCALVOC(
     imageset='val',
     roi_path='./data/',
     roi_type=opt.proposal,
-    devkit='./devkit/'
+    devkit='./devkit/',
+    test_mode=True,
+    flip=False
 )
 
 
@@ -107,7 +109,7 @@ def test(net, criterion, output_dir):
         load_data(labels, lbl)
         boxes = Variable(torch.FloatTensor(box)).cuda()
         shapes = Variable(torch.FloatTensor(shapes)).cuda()
-        cls_score1, cls_score2 = net(images, shapes, boxes)
+        cls_score1, cls_score2, _ = net(images, shapes, boxes)
         loss1 = criterion(cls_score1, labels)
         loss2 = criterion(cls_score2, labels)
         loss = loss1 + loss2
