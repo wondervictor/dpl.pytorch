@@ -255,7 +255,8 @@ class PASCALVOC(Dataset):
         raw_data = sio.loadmat(filename)['boxes'].ravel()
         box_list = {}
         for i in xrange(raw_data.shape[0]):
-            box_list[self.image_index[i]] = raw_data[i][:, (1, 0, 3, 2)] - 1
+            # (x1, y1, x2, y2)
+            box_list[self.image_index[i]] = raw_data[i]  # [:, (1, 0, 3, 2)] - 1
         return box_list
 
     def _load_rois(self, roi_type, roi_dir):
