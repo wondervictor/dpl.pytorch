@@ -16,8 +16,8 @@ def collate_fn(batch):
     num_images = len(images)
     shapes = transposed[3]
 
-    max_shape = np.max(shapes, axis=0)
-    imgs = torch.zeros((num_images, 3, max_shape, max_shape))
+    max_shape = int(np.max(np.max(shapes, axis=0)))
+    imgs = torch.zeros(num_images, 3, max_shape, max_shape)
     for i in xrange(num_images):
         img_size = images[i].size()
         imgs[i, :, 0:img_size[1], 0:img_size[2]] = images[i]
@@ -37,8 +37,8 @@ def test_collate_fn(batch):
     num_images = len(images)
     shapes = transposed[2]
 
-    max_shape = np.max(shapes, axis=0)
-    imgs = torch.zeros((num_images, 3, max_shape, max_shape))
+    max_shape = int(np.max(np.max(shapes, axis=0)))
+    imgs = torch.zeros(num_images, 3, max_shape, max_shape)
     for i in xrange(num_images):
         img_size = images[i].size()
         imgs[i, :, 0:img_size[1], 0:img_size[2]] = images[i]
