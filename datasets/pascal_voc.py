@@ -11,6 +11,7 @@ import pickle
 import random
 import subprocess
 import numpy as np
+import numpy.random as npr
 import scipy.io as sio
 import scipy.sparse
 from PIL import Image
@@ -26,7 +27,7 @@ MATLAB = ''
 
 class PASCALVOC(Dataset):
 
-    def __init__(self, imageset, data_dir, img_size, roi_path, test_mode=False, flip=True, roi_type='dense_box', devkit=None):
+    def __init__(self, imageset, data_dir, roi_path, test_mode=False, flip=True, roi_type='dense_box', devkit=None):
         super(PASCALVOC, self).__init__()
 
         self._imageset = imageset  # 'trainval', 'val'
@@ -37,7 +38,6 @@ class PASCALVOC(Dataset):
                         'person', 'pottedplant', 'sheep', 'sofa', 'train',
                         'tvmonitor')
         self.img_ext = '.jpg'
-        self.img_size = img_size
         self.config = {'cleanup': True,
                        'use_salt': True,
                        'use_diff': False,
@@ -54,11 +54,19 @@ class PASCALVOC(Dataset):
         self.roi_path = roi_path
         self.roi_type = roi_type
         self.toTensor = transforms.ToTensor()
-        self.resize = transforms.Resize(img_size)
+        self.normalizer = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]
+        )
         self._load_rois(roi_type=self.roi_type, roi_dir=self.roi_path)
+        self.scales = (480, 576, 688, 864, 1200)
         if flip:
             self.add_flipped()
         self.test_mode = test_mode
+
+    @staticmethod
+    def flip(img):
+        return img.transpose(Image.FLIP_LEFT_RIGHT)
 
     def add_flipped(self):
         flipped = [x + '_flipped' for x in self.image_index]
@@ -256,7 +264,7 @@ class PASCALVOC(Dataset):
         box_list = {}
         for i in xrange(raw_data.shape[0]):
             # (x1, y1, x2, y2)
-            box_list[self.image_index[i]] = raw_data[i]  # [:, (1, 0, 3, 2)] - 1
+            box_list[self.image_index[i]] = raw_data[i][:, (1, 0, 3, 2)] - 1
         return box_list
 
     def _load_rois(self, roi_type, roi_dir):
@@ -265,23 +273,6 @@ class PASCALVOC(Dataset):
             self.rois = self._create_patches(roi_dir)
         elif roi_type == 'selective_search':
             self.rois = self._load_selective_search(roi_dir)
-
-    # def append_flipped_images(self):
-    #     num_images = self.num_images
-    #     widths = [Image.open(self.image_path_at(i)).size[0]
-    #               for i in xrange(num_images)]
-    #     for i in xrange(num_images):
-    #         boxes = self.roidb[i]['boxes'].copy()
-    #         oldx1 = boxes[:, 0].copy()
-    #         oldx2 = boxes[:, 2].copy()
-    #         boxes[:, 0] = widths[i] - oldx2 - 1
-    #         boxes[:, 2] = widths[i] - oldx1 - 1
-    #         assert (boxes[:, 2] >= boxes[:, 0]).all()
-    #         entry = {'boxes' : boxes,
-    #                  'labels' : self.roidb[i]['labels'],
-    #                  'flipped' : True}
-    #         self.roidb.append(entry)
-    #     self._image_index = self._image_index * 2
 
     def __getitem__(self, idx):
 
@@ -296,33 +287,29 @@ class PASCALVOC(Dataset):
         roi = self.rois[img_name]
         w, h = img.size
         max_size = max(h, w)
-        ratio = float(self.img_size) / float(max_size)
+        img_size = self.scales[npr.randint(0, len(self.scales))]
+        ratio = float(img_size) / float(max_size)
         w = int(w*ratio)
         h = int(h*ratio)
         img = img.resize((w, h))
         roi = roi * ratio
-        img = np.array(img)  # H x W x C
 
         if flipped:
             oldx1 = roi[:, 0].copy()
             oldx2 = roi[:, 2].copy()
             roi[:, 0] = w - oldx2 - 1
             roi[:, 2] = w - oldx1 - 1
-            img = img[:, ::-1, :].copy()
+            img = self.flip(img)
+        img = np.array(img)
+        im_shape = img.shape[1::-1]
         img = self.toTensor(img)
+        img = self.normalizer(img)
 
-        if len(roi) > 2000:
-            roi = random.sample(roi, 2000)
-
-        if not self.test_mode:
-            wrap_img = torch.zeros((3, self.img_size, self.img_size))
-            wrap_img[:, 0:h, 0:w] = img
-            img = wrap_img
         if self._imageset == 'test':
-            return img, roi, np.array([w, h], dtype=np.float32)
+            return img, roi, np.array(im_shape, dtype=np.float32)
         else:
             label = self._labels[img_name]['labels']
-            return img, label, roi, np.array([w, h], dtype=np.float32)
+            return img, label, roi, np.array(im_shape, dtype=np.float32)
 
 
 

@@ -50,8 +50,6 @@ class PatchHeadNetwork(nn.Module):
 
         roi_output = self.roi_align(features, rois)
         # N*512*7*7
-        patch_features = roi_output.view(-1, 512 * 7 * 7)
-        # N*25088
 
         num_rois = rois.size()[0]
         output_batch_id = np.zeros(num_rois, dtype=np.int32)
