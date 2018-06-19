@@ -34,7 +34,6 @@ opt = parser.parse_args()
 print(opt)
 
 val_dataset = pascal_voc.PASCALVOC(
-    img_size=opt.img_size,
     data_dir=opt.data_dir,
     imageset='test',
     roi_path='./data/',

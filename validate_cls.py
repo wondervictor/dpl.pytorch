@@ -44,7 +44,6 @@ if torch.cuda.is_available() and not opt.cuda:
 
 
 val_dataset = pascal_voc.PASCALVOC(
-    img_size=opt.img_size,
     data_dir=opt.data_dir,
     imageset='val',
     roi_path='./data/',

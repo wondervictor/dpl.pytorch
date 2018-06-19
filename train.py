@@ -62,7 +62,6 @@ if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 train_dataset = pascal_voc.PASCALVOC(
-    img_size=opt.img_size,
     data_dir=opt.data_dir,
     imageset=opt.imageset,
     roi_path='./data/',
@@ -71,7 +70,6 @@ train_dataset = pascal_voc.PASCALVOC(
 )
 
 val_dataset = pascal_voc.PASCALVOC(
-    img_size=opt.img_size,
     data_dir=opt.data_dir,
     imageset='val',
     roi_path='./data/',
